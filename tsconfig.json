@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // ES2017 -> ES2020 최신 JS메서드 사용 및 안정성 고려하여 선택
+    "lib": ["dom", "dom.iterable", "esnext"], 
+    "allowJs": true, // 프로젝트 내부에서 .js 파일 허용
+    "skipLibCheck": true, // 선언 파일의 type 검사를 건너뜁니다.
+    "strict": true, // strict mode family 옵션을 활성화
+    "noEmit": true, // JavaScript 소스 코드, 소스 맵, 선언문과 같은 컴파일러 출력 파일을 내보내지 마세요.
+    "esModuleInterop": true, // CommonJS 모듈을 ES6 스타일로 가져오는 기능을 활성화
+    "module": "esnext", // 모듈 시스템 설정
+    "moduleResolution": "bundler", // 모듈 해석 알고리즘 지정, 번들러를 위한 기본 해석 알고리즘(exports, imports를 package.json에서 사용), module: "exnext"와 함께 사용
+    "allowImportingTsExtensions": true, // TypeScript 관련 확장자(.ts, .mts, .tsx)를 사용해서 서로 import 허용
+    "resolveJsonModule": true, // .json 파일 import 허용
+    "isolatedModules": true, // 파일 단위로 타입 검사를 강제
+    "jsx": "preserve", // TypeScript가 jsx를 변환하지 않고 babel에서 처리
+    "noUnusedLocals": true, // 사용되지 않는 지역 변수 error 처리
+    "noUnusedParameters": true, // 사용하지 않는 함수 parameter error 처리
+    "noImplicitReturns": true, // 함수에서 return 포함 강제
+    "incremental": true, // TypeScript 컴파일러의 컴파일 속도 개선
+    "noFallthroughCasesInSwitch": true, // switch 문 내부의 비어 있지 않은 케이스에 break, return 또는 throw가 포함되도록 합니다.
+    "noUncheckedIndexedAccess": true, // 인덱스 접근 시 undefined를 포함하는 타입으로 반환. 즉, 존재가 확인되지 않는 객체 키에 대해서 undefined로 처리해줌으로써 런타임 오류 가능성 줄여줌
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": "./", 
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@styles/*": ["src/styles/*"],
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
