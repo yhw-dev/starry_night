@@ -42,7 +42,7 @@ const EditPage = () => {
     }
   }
 
-  return (
+  return [
     <div className='container mx-auto'>
       <h2 className='sr-only'>포스트 글쓰기</h2>
       <form onSubmit={handleSubmit} className='flex flex-col gap-5 h-screen'>
@@ -81,7 +81,7 @@ const EditPage = () => {
         </div>
       </form>
     </div>
-  )
+  ];
 }
 
 export default EditPage
