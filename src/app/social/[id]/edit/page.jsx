@@ -1,3 +1,5 @@
+"use client"
+
 import { updateDocument } from '@/lib/firebase/firestore'
 import React, { useState, useEffect } from 'react'
 
