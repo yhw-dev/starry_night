@@ -1,35 +1,41 @@
+import Button from "@/components/ui/Button";
 import Image from "next/image";
 import styles from "./page.module.css";
+import Link from "next/link";
+
+const quote = `
+.
+.
+.
+`;
 
 export default function Home() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <ul>
-          <li>
-            안녕하세용 처음 페이지입니다.
-          </li>
-          <li>시를 쓰세요.</li>
-          <li>여기에 깔롱한 시작화면 만들거임</li>
-        </ul>
+        <p className="text-lg">
+          별 하나에 <span className="font-bold">추억</span>과<br />별 하나에{" "}
+          <span className="font-bold">사랑</span>과<br />별 하나에{" "}
+          <span className="font-bold">쓸쓸함</span>과<br />별 하나에{" "}
+          <span className="font-bold">동경</span>과<br />별 하나에{" "}
+          <span className="font-bold">시</span>와<br />별 하나에{" "}
+          <span className="font-bold">어머니</span>,{" "}
+          <span className="font-bold">어머니</span>
+          <br/> .<br/> .<br/> .<br/>
+          당신의 <span className="font-bold">별</span>에는 어떤 이야기가 담겨있나요?
+        </p>
 
         <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="/signup"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            계정 만들기
-          </a>
-          <a
-            href="/login"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            계정이 있어요
-          </a>
+          <Link href="/signup">
+            <Button variant="primary" href="/signup">
+              계정 만들기
+            </Button>
+          </Link>
+          <Link href="/login">
+            <Button variant="secondary" href="/login">
+              계정이 있어요
+            </Button>
+          </Link>
         </div>
       </main>
     </div>
