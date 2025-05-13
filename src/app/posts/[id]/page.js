@@ -4,12 +4,20 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import Button from "@/components/ui/Button";
+import SearchBar from "@/components/user-activity/SearchBar";
 
 export default function PostDetailPage({ params }) {
   const router = useRouter();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  const resolvedParams = use(params); // params 객체를 풀어서 사용
+  const resolvedParams = use(params); // params 객체 풀기
+
+  // 검색 시 호출
+  const handleSearch = (keyword) => {
+    console.log("검색 키워드:", keyword);
+    // 검색 결과 페이지로 이동하고 싶다면 이 주석 해제:
+    // router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
+  };
 
   useEffect(() => {
     axios
@@ -46,32 +54,37 @@ export default function PostDetailPage({ params }) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-16 px-4 text-white">
-      <div className="max-w-2xl w-full text-center">
-        <h1 className="text-4xl font-bold mb-4 drop-shadow-lg animate-fade-in">
-          {post.title}
-        </h1>
-        <p className="text-sm text-gray-300 mb-6">
-          {new Date(post.createdAt).toLocaleDateString()}
-        </p>
+      <div className="max-w-2xl w-full">
 
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 mb-8 shadow-md max-w-lg mx-auto">
-          <p className="text-lg leading-relaxed text-gray-100 whitespace-pre-wrap">
-            {post.content}
-          </p>
+        {/* SearchBar: 상단에 추가 */}
+        <div className="mb-8">
+          <SearchBar onSearch={handleSearch} />
         </div>
 
-        <div className="flex justify-center gap-4">
-          <Link
-            href="/posts"
-          >
-            <Button variant="primary">목록</Button>
-          </Link>
-          <Link
-            href={`/posts/${resolvedParams.id}/edit`}
-          >
-            <Button variant="primary">수정</Button>
-          </Link>
-          <Button onClick={handleDelete} variant="secondary">삭제</Button>
+        {/* 본문 */}
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4 drop-shadow-lg animate-fade-in">
+            {post.title}
+          </h1>
+          <p className="text-sm text-gray-300 mb-6">
+            {new Date(post.createdAt).toLocaleDateString()}
+          </p>
+
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 mb-8 shadow-md max-w-lg mx-auto">
+            <p className="text-lg leading-relaxed text-gray-100 whitespace-pre-wrap">
+              {post.content}
+            </p>
+          </div>
+
+          <div className="flex justify-center gap-4">
+            <Link href="/posts">
+              <Button variant="primary">목록</Button>
+            </Link>
+            <Link href={`/posts/${resolvedParams.id}/edit`}>
+              <Button variant="primary">수정</Button>
+            </Link>
+            <Button onClick={handleDelete} variant="secondary">삭제</Button>
+          </div>
         </div>
       </div>
     </div>
