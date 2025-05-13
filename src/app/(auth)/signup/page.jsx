@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/firebase/auth';
 import { signInWithPopup } from 'firebase/auth';
+import Button from '@/components/ui/Button'
+import Textfield from '@/components/ui/Textfield'
 
 const Signup = () => {
     const { register } = useAuth();
