@@ -14,15 +14,15 @@ export default function Home() {
     <div className={styles.page}>
       <main className={styles.main}>
         <p className="text-lg">
-          별 하나에 <span class="font-bold">추억</span>과<br />별 하나에{" "}
-          <span class="font-bold">사랑</span>과<br />별 하나에{" "}
-          <span class="font-bold">쓸쓸함</span>과<br />별 하나에{" "}
-          <span class="font-bold">동경</span>과<br />별 하나에{" "}
-          <span class="font-bold">시</span>와<br />별 하나에{" "}
-          <span class="font-bold">어머니</span>,{" "}
-          <span class="font-bold">어머니</span>
+          별 하나에 <span className="font-bold">추억</span>과<br />별 하나에{" "}
+          <span className="font-bold">사랑</span>과<br />별 하나에{" "}
+          <span className="font-bold">쓸쓸함</span>과<br />별 하나에{" "}
+          <span className="font-bold">동경</span>과<br />별 하나에{" "}
+          <span className="font-bold">시</span>와<br />별 하나에{" "}
+          <span className="font-bold">어머니</span>,{" "}
+          <span className="font-bold">어머니</span>
           <br/> .<br/> .<br/> .<br/>
-          당신의 <span class="font-bold">별</span>에는 어떤 이야기가 담겨있나요?
+          당신의 <span className="font-bold">별</span>에는 어떤 이야기가 담겨있나요?
         </p>
 
         <div className={styles.ctas}>
