@@ -3,22 +3,33 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 const AboutPage = () => {
+  const [titleVisible, setTitleVisible] = useState(false);
   const [visibleCount, setVisibleCount] = useState(0);
   const [revealedIndices, setRevealedIndices] = useState(new Set());
   const observerRefs = useRef([]);
 
+  // 제목 1초 페이드인
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTitleVisible(true);
+    }, 0); // 즉시 시작할 경우 0, 지연하려면 조정
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 상단 문단 - 초 후부터 0.5초 간격으로 등장
   useEffect(() => {
     const timers = [];
     for (let i = 0; i < 3; i++) {
       timers.push(
         setTimeout(() => {
           setVisibleCount(prev => prev + 1);
-        }, i * 500)
+        }, 1000 + i * 500)
       );
     }
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  // 하단 문단 - 스크롤 감지 등장
   useEffect(() => {
     const options = {
       root: null,
@@ -62,8 +73,13 @@ const AboutPage = () => {
 
   return (
     <div className="min-h-screen text-white flex flex-col items-center justify-start px-6 py-16 mt-12 space-y-28">
-      {/* 간격 조절됨: space-y-12 → space-y-24 */}
-      <h1 className="text-5xl font-bold text-center">
+      
+      {/* 제목 - 1초 페이드인 */}
+      <h1
+        className={`text-5xl font-bold text-center transition-opacity duration-[1000ms] ${
+          titleVisible ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
         당신의 마음을 별자리에 남겨주세요
       </h1>
 
@@ -75,6 +91,7 @@ const AboutPage = () => {
           const delayClass = isUpper
             ? 'transition-opacity duration-1000'
             : 'transition-opacity duration-[2000ms]';
+
           return (
             <p
               key={idx}
