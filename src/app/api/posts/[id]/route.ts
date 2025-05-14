@@ -1,13 +1,5 @@
-// app/api/posts/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import pool from '@/lib/db'
-
-// 타입 정의
-interface RouteContext {
-  params: {
-    id: string
-  }
-}
 
 // 공통 포맷터 (created_at → createdAt 등)
 function formatPost(row: any) {
@@ -22,8 +14,8 @@ function formatPost(row: any) {
 }
 
 // GET: 게시글 조회
-export async function GET(_: NextRequest, context: RouteContext) {
-  const id = parseInt(context.params.id)
+export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+  const id = parseInt(params.id)
 
   try {
     const result = await pool.query('SELECT * FROM poems WHERE id = $1', [id])
@@ -40,8 +32,8 @@ export async function GET(_: NextRequest, context: RouteContext) {
 }
 
 // PUT: 게시글 수정
-export async function PUT(request: NextRequest, context: RouteContext) {
-  const id = parseInt(context.params.id)
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  const id = parseInt(params.id)
   const { title, content } = await request.json()
 
   try {
@@ -62,8 +54,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 }
 
 // DELETE: 게시글 삭제
-export async function DELETE(_: NextRequest, context: RouteContext) {
-  const id = parseInt(context.params.id)
+export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+  const id = parseInt(params.id)
 
   try {
     const result = await pool.query('DELETE FROM poems WHERE id = $1 RETURNING *', [id])
