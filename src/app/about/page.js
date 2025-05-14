@@ -5,9 +5,11 @@ import React, { useEffect, useState, useRef } from 'react';
 const AboutPage = () => {
   const [titleVisible, setTitleVisible] = useState(false);
   const [visibleCount, setVisibleCount] = useState(0);
+  const [readyForScrollReveal, setReadyForScrollReveal] = useState(false);
   const [revealedIndices, setRevealedIndices] = useState(new Set());
   const observerRefs = useRef([]);
 
+  // 제목 페이드인
   useEffect(() => {
     const timer = setTimeout(() => {
       setTitleVisible(true);
@@ -15,41 +17,48 @@ const AboutPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // 상위 3줄 순차 등장 + 이후 scrollReveal 활성화
   useEffect(() => {
     const timers = [];
     for (let i = 0; i < 3; i++) {
       timers.push(
         setTimeout(() => {
-          setVisibleCount(prev => prev + 1);
+          setVisibleCount((prev) => prev + 1);
+          if (i === 2) {
+            setTimeout(() => {
+              setReadyForScrollReveal(true);
+            }, 500); // 약간 여유
+          }
         }, 1000 + i * 500)
       );
     }
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  // 하단 문단 - 스크롤 감지 등장
+  // 하위 문단 스크롤 등장 감지
   useEffect(() => {
-    const options = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.5,
-    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const idx = Number(entry.target.getAttribute('data-index'));
+          if (entry.isIntersecting && readyForScrollReveal && idx >= 3) {
+            setRevealedIndices((prev) => new Set(prev).add(idx));
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.5,
+      }
+    );
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        const idx = Number(entry.target.getAttribute('data-index'));
-        if (entry.isIntersecting) {
-          setRevealedIndices(prev => new Set(prev).add(idx));
-        }
-      });
-    }, options);
-
-    observerRefs.current.forEach(ref => {
+    observerRefs.current.forEach((ref) => {
       if (ref) observer.observe(ref);
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [readyForScrollReveal]);
 
   const paragraphs = [
     `이곳은 시를 통해 감정을 나누는 밤하늘입니다.
@@ -66,28 +75,30 @@ const AboutPage = () => {
     `시는 마음이 흐르는 또 다른 방식입니다.
      우리에게 필요한 것은 거창한 문학이 아니라, 솔직한 한 줄입니다.`,
     `별 하나에 감정을 담고,
-     별 하나에 서로를 담습니다.`
+     별 하나에 서로를 담습니다.`,
   ];
 
   return (
     <div className="min-h-screen text-white flex flex-col items-center justify-start px-6 py-16 mt-12 space-y-28">
-      
+      {/* 제목 */}
       <h1
-        className={`text-5xl font-bold text-center transition-opacity duration-[1000ms] ${
+        className={`text-5xl font-bold text-center transition-opacity duration-1000 ${
           titleVisible ? 'opacity-100' : 'opacity-0'
         }`}
       >
         당신의 마음을 별자리에 남겨주세요
       </h1>
 
+      {/* 본문 문단들 */}
       <div className="max-w-xl text-xl leading-relaxed space-y-16 text-center">
         {paragraphs.map((text, idx) => {
           const isVisible =
             idx < 3 ? visibleCount > idx : revealedIndices.has(idx);
-          const isUpper = idx < 3;
-          const delayClass = isUpper
-            ? 'transition-opacity duration-1000'
-            : 'transition-opacity duration-[2000ms]';
+
+          const delayClass =
+            idx < 3
+              ? 'transition-opacity duration-1000'
+              : 'transition-opacity duration-[2000ms]';
 
           return (
             <p
