@@ -19,6 +19,7 @@ const Header = () => {
                 <nav className="absolute left-1/2 transform -translate-x-1/2 hidden md:flex space-x-6 text-lg">
                     <Link href="/about" className="hover:text-gray-300">사이트 소개</Link>
                     <Link href="/posts" className="hover:text-gray-300">시 목록</Link>
+                    <Link href="/poems" className="hover:text-gray-300">시 감상</Link>
                 </nav>
 
                 {/* 로그인/로그아웃 버튼들 */}
