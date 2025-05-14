@@ -9,7 +9,17 @@ interface CardProps {
 
 export default function Card({ children, className }: CardProps) {
   return (
-    <div className={cn('bg-white rounded-xl shadow-md p-4', className)}>
+    <div className={cn('bg-white/10',
+        'backdrop-blur-md',
+        'rounded-xl',
+        'p-4',
+        'text-white',
+        'shadow-md',
+        'transition-colors',
+        'duration-300',
+        'hover:bg-white',
+        'hover:text-black',
+        'hover:animate-glow',className)}>
       {children}
     </div>
   )
