@@ -51,7 +51,7 @@ export default function PostDetailPage({ params }) {
           {post.title}
         </h1>
         <p className="text-sm text-gray-300 mb-6">
-          작성일: {new Date(post.createdAt).toLocaleDateString()}
+          {new Date(post.createdAt).toLocaleDateString()}
         </p>
 
         <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 mb-8 shadow-md max-w-lg mx-auto">
