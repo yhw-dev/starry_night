@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-export async function POST(_: NextRequest, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
+export async function POST(_: NextRequest, { params }: { params: { id: string } }) {
   const id = parseInt(params.id);
 
   try {
