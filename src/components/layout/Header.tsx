@@ -24,9 +24,7 @@ const Header = () => {
                 {/* 로그인/로그아웃 버튼들 */}
                 <div className="flex space-x-2">
                     {user ? (
-                        <button onClick={logout} className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded">
-                            로그아웃
-                        </button>
+                        <Button variant='secondary' onClick={logout}>로그아웃</Button>
                     ) : (
                         <>
                             <Link href="/login">
