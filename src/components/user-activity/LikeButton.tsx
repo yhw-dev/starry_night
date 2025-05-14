@@ -1,11 +1,9 @@
-// components/user-activity/LikeButton.tsx
 "use client";
 
-import { useState } from "react";
-import { db } from "@/lib/firebase";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { useAuth } from "@/lib/firebase/auth"; // 로그인 정보 가져오는 커스텀 훅
+import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
+import { useAuth } from "@/lib/firebase/auth";
+import { checkLikedPoem, logLikePoem } from "@/lib/user-activity";
 
 interface LikeButtonProps {
   poemId: string;
@@ -14,29 +12,54 @@ interface LikeButtonProps {
 export default function LikeButton({ poemId }: LikeButtonProps) {
   const { user } = useAuth();
   const [liked, setLiked] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleLike = async () => {
-    if (!user) return alert("로그인이 필요합니다.");
+  useEffect(() => {
+    const fetch = async () => {
+      if (user) {
+        const result = await checkLikedPoem(user.uid, poemId);
+        setLiked(result);
+      }
+      setLoading(false);
+    };
+    fetch();
+  }, [user, poemId]);
 
-    await addDoc(collection(db, "user_logs"), {
-      userId: user.uid,
-      type: "like",
-      poemId,
-      timestamp: serverTimestamp(),
-    });
+  const handleClick = async () => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
 
-    setLiked(true);
+    setAnimating(true);
+    const result = await logLikePoem(user.uid, poemId);
+    setLiked(result);
+    setTimeout(() => setAnimating(false), 300);
   };
+
+  if (loading) return null;
 
   return (
     <button
-      onClick={handleLike}
-      className={`flex items-center gap-2 px-4 py-2 rounded-full transition ${
-        liked ? "bg-blue-300 text-white" : "bg-white text-blue-500"
-      } shadow-xl hover:scale-105`}
+      onClick={handleClick}
+      className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg transition transform
+        ${liked
+          ? "bg-blue-500 text-white animate-glow scale-105"
+          : "bg-white text-blue-500 hover:bg-blue-100 hover:shadow-md"}
+        ${animating ? "scale-110" : ""}`}
+      style={{
+        boxShadow: liked
+          ? "0 0 12px rgba(99, 179, 237, 0.6), 0 0 24px rgba(99, 179, 237, 0.4)"
+          : undefined,
+      }}
     >
-      <Heart fill={liked ? "white" : "none"} className="w-5 h-5" />
-      {liked ? "좋아요 완료" : "좋아요"}
+      <Heart
+        className="w-5 h-5 transition"
+        fill={liked ? "white" : "none"}
+        stroke="currentColor"
+      />
+      {liked ? "좋아요됨" : "좋아요"}
     </button>
   );
 }
