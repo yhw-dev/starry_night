@@ -70,4 +70,3 @@ export async function POST(req) {
   }
 }
 
-axios.get('/api/posts')

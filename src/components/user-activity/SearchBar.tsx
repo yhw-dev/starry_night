@@ -2,9 +2,10 @@
 "use client";
 
 import { useState } from "react";
-import { db } from "@/lib/firebase";
+import { db } from "@/lib/firebase/firebase.js";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/lib/firebase/auth";
+import { Search } from "lucide-react"; //돋보기 기호
 
 interface SearchBarProps {
   onSearch: (keyword: string) => void;
@@ -39,9 +40,10 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
       />
       <button
         onClick={handleSearch}
+        aria-label="검색"
         className="bg-blue-500 text-white px-3 py-1 rounded-full hover:bg-blue-600 transition"
       >
-        검색
+        <Search className="w-6 h-6 text-white" />
       </button>
     </div>
   );
