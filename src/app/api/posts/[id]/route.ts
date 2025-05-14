@@ -22,12 +22,8 @@ function formatPost(row: any) {
 }
 
 // GET: 게시글 조회
-export async function GET(
-  _: NextRequest,
-  context: RouteContext
-) {
-  const { params } = context
-  const id = parseInt(params.id)
+export async function GET(_: NextRequest, context: RouteContext) {
+  const id = parseInt(context.params.id)
 
   try {
     const result = await pool.query('SELECT * FROM poems WHERE id = $1', [id])
@@ -44,20 +40,13 @@ export async function GET(
 }
 
 // PUT: 게시글 수정
-export async function PUT(
-  request: NextRequest,
-  context: RouteContext
-) {
-  const { params } = context
-  const id = parseInt(params.id)
+export async function PUT(request: NextRequest, context: RouteContext) {
+  const id = parseInt(context.params.id)
   const { title, content } = await request.json()
 
   try {
     const result = await pool.query(
-      `UPDATE poems 
-       SET title = $1, content = $2
-       WHERE id = $3
-       RETURNING *`,
+      `UPDATE poems SET title = $1, content = $2 WHERE id = $3 RETURNING *`,
       [title, content, id]
     )
 
@@ -73,12 +62,8 @@ export async function PUT(
 }
 
 // DELETE: 게시글 삭제
-export async function DELETE(
-  _: NextRequest,
-  context: RouteContext
-) {
-  const { params } = context
-  const id = parseInt(params.id)
+export async function DELETE(_: NextRequest, context: RouteContext) {
+  const id = parseInt(context.params.id)
 
   try {
     const result = await pool.query('DELETE FROM poems WHERE id = $1 RETURNING *', [id])
