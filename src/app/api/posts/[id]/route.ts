@@ -21,7 +21,7 @@ function formatPost(row: any) {
   }
 }
 
-// GET: 게시글 상세 조회
+// GET: 게시글 조회
 export async function GET(
   _: NextRequest,
   context: RouteContext
