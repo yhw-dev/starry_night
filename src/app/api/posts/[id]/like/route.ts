@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import pool from '@/lib/db'
 
-// 타입 정의
-type RouteContext = {
-  params: {
-    id: string
-  }
-}
-
-// POST 요청 처리 - 좋아요 수 증가
+// POST: /api/posts/[id]/like
 export async function POST(
   _req: NextRequest,
-  context: RouteContext
+  { params }: { params: { id: string } } // ✅ 이렇게 명시적으로 params만 구조분해
 ) {
-  const id = parseInt(context.params.id)
+  const id = parseInt(params.id)
 
   try {
     const result = await pool.query(
