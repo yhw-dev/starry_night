@@ -6,6 +6,7 @@ import axios from "axios";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import SearchBar from "@/components/user-activity/SearchBar"; // SearchBar import
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 export default function PostsPage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function PostsPage() {
       });
   }, []);
 
-  if (loading) return <div>로딩 중...</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <div className="flex flex-col items-center py-10">
