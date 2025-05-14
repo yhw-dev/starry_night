@@ -4,9 +4,9 @@ import pool from '@/lib/db'
 // POST: /api/posts/[id]/like
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { id: string } } // ✅ 이렇게 명시적으로 params만 구조분해
+  { params }: { params: Promise<{ id: string }> } // ✅ 이렇게 명시적으로 params만 구조분해
 ) {
-  const id = parseInt(params.id)
+  const { id } = await params;
 
   try {
     const result = await pool.query(
