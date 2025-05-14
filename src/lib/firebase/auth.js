@@ -8,7 +8,9 @@ import {
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  sendEmailVerification,
+  updateProfile
 } from 'firebase/auth';
 import {
   doc,
@@ -36,14 +38,48 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // 로그인 함수
+  // 로그인 함수 + 이메일 인증 확인
   const login = async (email, password) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await user.reload(); // 최신 인증 상태 확인
+      if (!user.emailVerified) {
+        await signOut(auth); // 인증 안 된 사용자는 바로 로그아웃
+        throw new Error("EMAIL_NOT_VERIFIED");
+      }
+
+      return userCredential;
+    } catch (err) {
+      throw err;
+    }
   };
 
-  // 회원가입 함수
-  const register = async (email, password) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+  // 회원가입 함수 (이름 + 이메일 인증)
+  const register = async (email, password, name) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // 이름 설정
+    if (name) {
+      await updateProfile(user, { displayName: name });
+    }
+
+    // 이메일 인증 전송
+    await sendEmailVerification(user);
+
+    // Firestore에 사용자 정보 저장
+    const userRef = doc(db, "users", user.uid);
+    await setDoc(userRef, {
+      uid: user.uid,
+      displayName: name ?? null,
+      email: user.email,
+      emailVerified: false,
+      createdAt: serverTimestamp(),
+    });
+
+    return userCredential;
   };
 
   // 로그아웃 함수
@@ -58,7 +94,6 @@ export const AuthProvider = ({ children }) => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Firestore에 사용자 정보 저장
       const userRef = doc(db, "users", user.uid);
       const snapshot = await getDoc(userRef);
 
@@ -68,12 +103,15 @@ export const AuthProvider = ({ children }) => {
           displayName: user.displayName,
           email: user.email,
           photoURL: user.photoURL,
+          emailVerified: user.emailVerified,
           createdAt: serverTimestamp(),
         });
       }
 
+      return result;
     } catch (error) {
       console.error("Google 로그인 실패:", error);
+      throw error;
     }
   };
 
