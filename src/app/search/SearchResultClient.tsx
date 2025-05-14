@@ -1,15 +1,21 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Card from "@/components/ui/Card";
-import { Search } from "lucide-react"; //돋보기 기호
+import { Search } from "lucide-react";
 
-export default function SearchResultPage() {
+interface Post {
+  id: number;
+  title: string;
+  content: string;
+}
+
+export default function SearchResultClient() {
   const searchParams = useSearchParams();
   const keyword = searchParams.get("keyword") || "";
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<Post[]>([]); // ✅ 타입 지정
 
   useEffect(() => {
     if (!keyword) return;
@@ -22,10 +28,9 @@ export default function SearchResultPage() {
 
   return (
     <div className="px-6 py-10 text-white">
-      <h1 className="text-2xl font-semibold mb-6">
-        <Suspense fallback={<div>로딩 중...</div>}>
-         <Search className="w-6 h-6 text-white" /> “{keyword}” 검색 결과
-        </Suspense>
+      <h1 className="text-2xl font-semibold mb-6 flex items-center gap-2">
+        <Search className="w-6 h-6 text-white" />
+        “{keyword}” 검색 결과
       </h1>
 
       {results.length === 0 ? (
