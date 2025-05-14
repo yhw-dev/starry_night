@@ -52,7 +52,7 @@ export default function PostsPage() {
           <Link key={post.id} href={`/posts/${post.id}`} className="block">
             <Card className="w-full">
               <h2 className="text-black text-xl font-bold">{post.title}</h2>
-              <p className="text-gray-600">{post.content}</p>
+              {/* <p className="text-gray-600">{post.content}</p> */}
               <span className="text-gray-500 text-sm">
                 {new Date(post.createdAt).toLocaleDateString()}
               </span>
