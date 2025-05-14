@@ -13,8 +13,11 @@ function formatPost(row: any) {
 }
 
 // GET: 게시글 상세 조회
-export async function GET(_: NextRequest, context: { params: { id: string } }) {
-  const id = parseInt(context.params.id);
+export async function GET(
+  _: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const id = parseInt(params.id);
 
   try {
     const result = await pool.query('SELECT * FROM poems WHERE id = $1', [id]);
@@ -31,8 +34,11 @@ export async function GET(_: NextRequest, context: { params: { id: string } }) {
 }
 
 // PUT: 게시글 수정
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
-  const id = parseInt(context.params.id);
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const id = parseInt(params.id);
   const { title, content } = await request.json();
 
   try {
@@ -56,8 +62,11 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
 }
 
 // DELETE: 게시글 삭제
-export async function DELETE(_: NextRequest, context: { params: { id: string } }) {
-  const id = parseInt(context.params.id);
+export async function DELETE(
+  _: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const id = parseInt(params.id);
 
   try {
     const result = await pool.query('DELETE FROM poems WHERE id = $1 RETURNING *', [id]);
