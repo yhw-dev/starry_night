@@ -24,15 +24,26 @@ import {
   getDocs
 } from 'firebase/firestore';
 
-const AuthContext = createContext({
+interface AuthContextType {
+  user: any;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  checkVerifiedEmailExists: (email: string) => Promise<boolean>;
+}
+
+const AuthContext = createContext<AuthContextType>({
   user: null,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
   loginWithGoogle: async () => {},
   resetPassword: async () => {},
-  checkVerifiedEmailExists: async () => {}
+  checkVerifiedEmailExists: async () => false,
 });
+
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -116,13 +127,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const resetPassword = async (email) => {
+  const resetPassword = async (email: string): Promise<void> => {
     try {
       await sendPasswordResetEmail(auth, email);
     } catch (err) {
       throw err;
     }
   };
+
 
   const checkVerifiedEmailExists = async (email) => {
     const q = query(
