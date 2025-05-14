@@ -17,10 +17,17 @@ interface SearchBarProps {
   onSearch: (keyword: string) => void;
 }
 
+interface FirebaseUser {
+  uid: string;
+  email?: string;
+  displayName?: string;
+  // 필요한 필드 더 추가 가능
+}
+
 export default function SearchBar({ onSearch }: SearchBarProps) {
   const [input, setInput] = useState("");
   const [recentKeywords, setRecentKeywords] = useState<string[]>([]);
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: FirebaseUser | null };
   const RECENT_KEY = "recent_search_keywords";
 
   // 🔄 Load keywords from localStorage or Firestore
