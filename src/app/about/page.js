@@ -8,15 +8,13 @@ const AboutPage = () => {
   const [revealedIndices, setRevealedIndices] = useState(new Set());
   const observerRefs = useRef([]);
 
-  // 제목 1초 페이드인
   useEffect(() => {
     const timer = setTimeout(() => {
       setTitleVisible(true);
-    }, 0); // 즉시 시작할 경우 0, 지연하려면 조정
+    }, 0);
     return () => clearTimeout(timer);
   }, []);
 
-  // 상단 문단 - 초 후부터 0.5초 간격으로 등장
   useEffect(() => {
     const timers = [];
     for (let i = 0; i < 3; i++) {
@@ -74,7 +72,6 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen text-white flex flex-col items-center justify-start px-6 py-16 mt-12 space-y-28">
       
-      {/* 제목 - 1초 페이드인 */}
       <h1
         className={`text-5xl font-bold text-center transition-opacity duration-[1000ms] ${
           titleVisible ? 'opacity-100' : 'opacity-0'
