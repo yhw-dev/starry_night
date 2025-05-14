@@ -13,7 +13,7 @@ export default function PostDetailPage({ params }) {
 
   useEffect(() => {
     axios
-      .get(/api/posts/${resolvedParams.id})
+      .get(`/api/posts/${resolvedParams.id}`)
       .then((res) => {
         setPost(res.data);
         setLoading(false);
@@ -30,7 +30,7 @@ export default function PostDetailPage({ params }) {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
     try {
-      const res = await axios.delete(/api/posts/${resolvedParams.id});
+      const res = await axios.delete(`/api/posts/${resolvedParams.id}`);
       if (res.status === 200) {
         router.push("/posts");
       } else {
@@ -67,7 +67,7 @@ export default function PostDetailPage({ params }) {
             <Button variant="primary">목록</Button>
           </Link>
           <Link
-            href={/posts/${resolvedParams.id}/edit}
+            href={`/posts/${resolvedParams.id}/edit`}
           >
             <Button variant="primary">수정</Button>
           </Link>
