@@ -93,7 +93,7 @@ export default function Home() {
           style={{ opacity: visibleFinal ? 1 : 0 }}
         >
           <Link href="/signup">
-            <Button variant="primary" href="/signup">
+            <Button variant="primary" href="/signup" className="border border-white">
               계정 만들기
             </Button>
           </Link>
