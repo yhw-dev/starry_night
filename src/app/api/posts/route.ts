@@ -16,7 +16,7 @@ export async function GET() {
       id: row.id,
       title: row.title,
       content: row.content,
-      createdAt: row.created_at,
+      createdAt: row.created_date,
     }));
 
     return NextResponse.json(posts, { status: 200 });
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       id: result.rows[0].id,
       title: result.rows[0].title,
       content: result.rows[0].content,
-      createdAt: result.rows[0].created_at,
+      createdAt: result.rows[0].created_date,
     };
 
     return NextResponse.json(newPost, { status: 201 });
