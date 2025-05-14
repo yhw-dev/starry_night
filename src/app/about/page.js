@@ -3,29 +3,38 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 const AboutPage = () => {
+  const [titleVisible, setTitleVisible] = useState(false);
   const [visibleCount, setVisibleCount] = useState(0);
   const [revealedIndices, setRevealedIndices] = useState(new Set());
   const observerRefs = useRef([]);
 
-  // 상단 문단 - 순차 딜레이 방식
+  // 제목 1초 페이드인
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTitleVisible(true);
+    }, 0); // 즉시 시작할 경우 0, 지연하려면 조정
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 상단 문단 - 초 후부터 0.5초 간격으로 등장
   useEffect(() => {
     const timers = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       timers.push(
         setTimeout(() => {
           setVisibleCount(prev => prev + 1);
-        }, i * 500)
+        }, 1000 + i * 500)
       );
     }
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  // 하단 문단 - IntersectionObserver 방식
+  // 하단 문단 - 스크롤 감지 등장
   useEffect(() => {
     const options = {
       root: null,
       rootMargin: '0px',
-      threshold: 0.5, // 화면의 절반 이상 보이면
+      threshold: 0.5,
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -45,7 +54,6 @@ const AboutPage = () => {
   }, []);
 
   const paragraphs = [
-    // 상단 문단 5개
     `이곳은 시를 통해 감정을 나누는 밤하늘입니다.
      말로는 전하지 못했던 감정들을, 글로 담아 별로 띄워보세요.`,
     `누구나 하루에 하나의 시를 남길 수 있습니다.
@@ -57,8 +65,6 @@ const AboutPage = () => {
      당신의 문학적 감성을 더 풍부하게 만들어줍니다.`,
     `이제, 당신의 감정을 기록해보세요.
      그리고 누군가의 밤하늘에 따뜻한 별이 되어주세요.`,
-    
-    // 하단 문단들
     `시는 마음이 흐르는 또 다른 방식입니다.
      우리에게 필요한 것은 거창한 문학이 아니라, 솔직한 한 줄입니다.`,
     `별 하나에 감정을 담고,
@@ -66,19 +72,26 @@ const AboutPage = () => {
   ];
 
   return (
-    <div className="min-h-screen text-white flex flex-col items-center justify-start px-6 py-16 mt-20 space-y-12">
-      <h1 className="text-5xl font-bold text-center">
-        당신의 마음을 별로 남겨주세요
+    <div className="min-h-screen text-white flex flex-col items-center justify-start px-6 py-16 mt-12 space-y-28">
+      
+      {/* 제목 - 1초 페이드인 */}
+      <h1
+        className={`text-5xl font-bold text-center transition-opacity duration-[1000ms] ${
+          titleVisible ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        당신의 마음을 별자리에 남겨주세요
       </h1>
 
       <div className="max-w-xl text-xl leading-relaxed space-y-16 text-center">
         {paragraphs.map((text, idx) => {
           const isVisible =
-            idx < 5 ? visibleCount > idx : revealedIndices.has(idx);
-          const isUpper = idx < 5;
+            idx < 3 ? visibleCount > idx : revealedIndices.has(idx);
+          const isUpper = idx < 3;
           const delayClass = isUpper
             ? 'transition-opacity duration-1000'
             : 'transition-opacity duration-[2000ms]';
+
           return (
             <p
               key={idx}
