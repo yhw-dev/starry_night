@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import Card from "@/components/ui/Card";
 import { Search } from "lucide-react"; //돋보기 기호
@@ -23,7 +23,9 @@ export default function SearchResultPage() {
   return (
     <div className="px-6 py-10 text-white">
       <h1 className="text-2xl font-semibold mb-6">
-        <Search className="w-6 h-6 text-white" /> “{keyword}” 검색 결과
+        <Suspense fallback={<div>로딩 중...</div>}>
+         <Search className="w-6 h-6 text-white" /> “{keyword}” 검색 결과
+        </Suspense>
       </h1>
 
       {results.length === 0 ? (
