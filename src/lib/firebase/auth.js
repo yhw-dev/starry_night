@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { auth, db } from './firebase';
+import { createContext, useContext, useEffect, useState } from 'react'
+import { auth, db } from './firebase'
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -9,58 +9,54 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup
-} from 'firebase/auth';
+} from 'firebase/auth'
 import {
   doc,
   getDoc,
   setDoc,
   serverTimestamp
-} from 'firebase/firestore';
+} from 'firebase/firestore'
 
-// AuthContext 컨텍스트 생성
+// ✅ AuthContext 생성 (초기값은 빈 함수들)
 const AuthContext = createContext({
   user: null,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
-  loginWithGoogle: async () => {}
-});
+  loginWithGoogle: async () => {},
+})
 
-// AuthProvider 컴포넌트 정의
+// ✅ AuthProvider 컴포넌트
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null)
 
-  // 사용자 상태 업데이트
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, setUser)
+    return () => unsubscribe()
+  }, [])
 
-  // 로그인 함수
   const login = async (email, password) => {
-    await signInWithEmailAndPassword(auth, email, password);
-  };
+    await signInWithEmailAndPassword(auth, email, password)
+  }
 
-  // 회원가입 함수
   const register = async (email, password) => {
-    await createUserWithEmailAndPassword(auth, email, password);
-  };
+    const result = await createUserWithEmailAndPassword(auth, email, password)
+    setUser(result.user)
+  }
 
-  // 로그아웃 함수
   const logout = async () => {
-    await signOut(auth);
-  };
+    await signOut(auth)
+    setUser(null)
+  }
 
-  // Google 로그인 + Firestore 유저 정보 저장
   const loginWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
+    const provider = new GoogleAuthProvider()
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+      const result = await signInWithPopup(auth, provider)
+      const user = result.user
 
-      // Firestore에 사용자 정보 저장
-      const userRef = doc(db, "users", user.uid);
-      const snapshot = await getDoc(userRef);
+      const userRef = doc(db, 'users', user.uid)
+      const snapshot = await getDoc(userRef)
 
       if (!snapshot.exists()) {
         await setDoc(userRef, {
@@ -69,13 +65,14 @@ export const AuthProvider = ({ children }) => {
           email: user.email,
           photoURL: user.photoURL,
           createdAt: serverTimestamp(),
-        });
+        })
       }
 
+      setUser(user)
     } catch (error) {
-      console.error("Google 로그인 실패:", error);
+      console.error('Google 로그인 실패:', error)
     }
-  };
+  }
 
   return (
     <AuthContext.Provider value={{
@@ -87,8 +84,8 @@ export const AuthProvider = ({ children }) => {
     }}>
       {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
 
-// 사용자 정의 훅
-export const useAuth = () => useContext(AuthContext);
+// ✅ 커스텀 훅
+export const useAuth = () => useContext(AuthContext)

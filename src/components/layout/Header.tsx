@@ -2,10 +2,12 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/lib/firebase/auth'
+import { User } from "firebase/auth"
 import Button from '../ui/Button'
 
 const Header = () => {
     const { user, logout } = useAuth()
+    const typedUser = user as User | null
 
     return (
         <header className="sticky top-0 z-50 w-full bg-black text-white shadow-md">
@@ -22,17 +24,25 @@ const Header = () => {
                     <Link href="/poems" className="hover:text-gray-300">시 감상</Link>
                 </nav>
 
-                {/* 로그인/로그아웃 버튼들 */}
-                <div className="flex space-x-2">
+                {/* 사용자 정보 + 버튼들 */}
+                <div className="flex items-center space-x-4">
+                    {/* 사용자 이름 */}
+                    {typedUser && (
+                        <span className="text-sm text-gray-300">
+                            {typedUser.displayName ? `${typedUser.displayName}님` : '사용자님'}
+                        </span>
+                    )}
+
+                    {/* 로그인 / 로그아웃 버튼 */}
                     {user ? (
-                        <Button variant='secondary' onClick={logout}>로그아웃</Button>
+                        <Button variant="secondary" onClick={logout}>로그아웃</Button>
                     ) : (
                         <>
                             <Link href="/login">
-                                <Button variant='primary'>로그인</Button>
+                                <Button variant="primary">로그인</Button>
                             </Link>
                             <Link href="/signup">
-                                <Button variant='primary'>회원가입</Button>
+                                <Button variant="primary">회원가입</Button>
                             </Link>
                         </>
                     )}
