@@ -1,16 +1,21 @@
-// src/lib/firebase/auth.js
-"use client"
+"use client";
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from './firebase';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
+import { auth, db } from './firebase';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp
+} from 'firebase/firestore';
 
 // AuthContext 컨텍스트 생성
 const AuthContext = createContext({
@@ -46,13 +51,29 @@ export const AuthProvider = ({ children }) => {
     await signOut(auth);
   };
 
-  // Google 로그인 함수
+  // Google 로그인 + Firestore 유저 정보 저장
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Firestore에 사용자 정보 저장
+      const userRef = doc(db, "users", user.uid);
+      const snapshot = await getDoc(userRef);
+
+      if (!snapshot.exists()) {
+        await setDoc(userRef, {
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          createdAt: serverTimestamp(),
+        });
+      }
+
     } catch (error) {
-      console.error('Google 로그인 실패:', error);
+      console.error("Google 로그인 실패:", error);
     }
   };
 
