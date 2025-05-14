@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
-export async function POST(_: NextRequest, context: RouteContext) {
-  const id = parseInt(context.params.id);
+export async function POST(_: NextRequest, { params }: { params: { id: string } }) {
+  const id = parseInt(params.id);
 
   try {
     const result = await pool.query(
