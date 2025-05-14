@@ -1,3 +1,4 @@
+//src/app/posts/[id]/page.js
 "use client";
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,7 @@ export default function PostDetailPage({ params }) {
   const router = useRouter();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [likes, setLikes] = useState(0);
   const resolvedParams = use(params); // params 객체를 풀어서 사용
 
   useEffect(() => {
@@ -16,6 +18,7 @@ export default function PostDetailPage({ params }) {
       .get(`/api/posts/${resolvedParams.id}`)
       .then((res) => {
         setPost(res.data);
+        setLikes(res.data.likes);
         setLoading(false);
       })
       .catch((error) => {
@@ -41,6 +44,16 @@ export default function PostDetailPage({ params }) {
     }
   };
 
+  const handleLike = async () => {
+    try {
+      const res = await axios.post(`/api/posts/${resolvedParams.id}/like`);
+      setLikes(res.data.likes);
+    } catch (error) {
+      console.error("좋아요 오류:", error);
+      alert("좋아요 처리에 실패했습니다.");
+    }
+  };
+
   if (loading) return <div>로딩 중...</div>;
   if (!post) return <div>게시글을 찾을 수 없습니다.</div>;
 
@@ -60,18 +73,25 @@ export default function PostDetailPage({ params }) {
           </p>
         </div>
 
-        <div className="flex justify-center gap-4">
-          <Link
-            href="/posts"
+        <div className="mt-6 flex justify-center items-center gap-4">
+          <button
+            onClick={handleLike}
+            className="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded-xl shadow transition"
           >
+            ❤️ 좋아요 {likes}
+          </button>
+        </div>
+
+        <div className="flex justify-center gap-4">
+          <Link href="/posts">
             <Button variant="primary">목록</Button>
           </Link>
-          <Link
-            href={`/posts/${resolvedParams.id}/edit`}
-          >
+          <Link href={`/posts/${resolvedParams.id}/edit`}>
             <Button variant="primary">수정</Button>
           </Link>
-          <Button onClick={handleDelete} variant="secondary">삭제</Button>
+          <Button onClick={handleDelete} variant="secondary">
+            삭제
+          </Button>
         </div>
       </div>
     </div>

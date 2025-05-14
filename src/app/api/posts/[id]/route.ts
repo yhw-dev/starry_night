@@ -1,3 +1,4 @@
+// app/api/posts/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import pool from '@/lib/db'
 
@@ -16,6 +17,7 @@ function formatPost(row: any) {
     content: row.content,
     author: row.author,
     createdAt: row.created_date,
+    likes: row.likes,
   }
 }
 

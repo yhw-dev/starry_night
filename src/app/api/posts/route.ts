@@ -6,7 +6,7 @@ import pool from '@/lib/db';
 export async function GET() {
   try {
     const result = await pool.query(`
-      SELECT id, title, content, created_date 
+      SELECT id, title, content, created_date, likes
       FROM poems 
       ORDER BY created_date DESC
     `);
@@ -17,6 +17,7 @@ export async function GET() {
       title: row.title,
       content: row.content,
       createdAt: row.created_date,
+      likes: row.likes,
     }));
 
     return NextResponse.json(posts, { status: 200 });
@@ -43,9 +44,9 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await pool.query(
-      `INSERT INTO poems (title, content, created_date)
-       VALUES ($1, $2, NOW())
-       RETURNING id, title, content, created_date`,
+      `INSERT INTO poems (title, content, created_date, likes)
+       VALUES ($1, $2, NOW(), 0)
+       RETURNING id, title, content, created_date, likes`,
       [title, content]
     );
 
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
       title: result.rows[0].title,
       content: result.rows[0].content,
       createdAt: result.rows[0].created_date,
+      likes: result.rows[0].likes,
     };
 
     return NextResponse.json(newPost, { status: 201 });
