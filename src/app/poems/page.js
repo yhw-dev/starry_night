@@ -4,11 +4,18 @@ import { useState, useEffect } from 'react';
 import poemsData from '../../data/poems.json';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase/firebase';
+import { initializeLikesCount } from '@/lib/user-activity/initLikesCount';
+
 
 const SearchBar = dynamic(
   () => import('../../components/user-activity/SearchBar'),
   { ssr: false }
 );
+
+
+
 
 export default function PoemsPage() {
   const [poems, setPoems] = useState([]);
@@ -17,20 +24,39 @@ export default function PoemsPage() {
   const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
-    const sorted = [...poemsData].sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    // 🚨 개발 중에만 잠깐 활성화 (주의!)
+    initializeLikesCount();
+  }, []);
+
+
+  useEffect(() => {
+    // 전체 시 목록 및 검색용 시는 로컬 JSON에서 불러옴
     setPoems(poemsData);
     setFiltered(poemsData);
-    setRecommended(sorted.slice(0, 5));
+  }, []);
+
+  useEffect(() => {
+    const fetchTopLikedPoems = async () => {
+      const poemsRef = collection(db, 'poems');
+      const q = query(poemsRef, orderBy('likesCount', 'desc'), limit(5));
+      const snap = await getDocs(q);
+      const topPoems = snap.docs.map(doc => ({ ...doc.data(), num: Number(doc.id) }));
+      setRecommended(topPoems);
+    };
+    fetchTopLikedPoems();
   }, []);
 
   const handleSearch = (keyword) => {
     const trimmed = keyword.trim();
+    const lowerKeyword = trimmed.toLowerCase();
+
     if (trimmed === "") {
       setFiltered(poems);
       setHasSearched(false);
     } else {
       const result = poems.filter((p) =>
-        p.title.toLowerCase().includes(trimmed.toLowerCase())
+        p.title.toLowerCase().includes(lowerKeyword) ||
+        p.author.toLowerCase().includes(lowerKeyword)
       );
       setFiltered(result);
       setHasSearched(true);
@@ -54,7 +80,6 @@ export default function PoemsPage() {
           </ul>
         </div>
       </div>
-
 
       {/* 🔍 가운데: 검색창 + 검색 결과 */}
       <div className="w-2/4">
@@ -88,7 +113,7 @@ export default function PoemsPage() {
           {recommended.map((poem) => (
             <li key={poem.num}>
               <Link href={`/poems/${poem.num}`} className="text-blue-300 hover:underline">
-                {poem.title} - {poem.author}
+                {poem.title} - {poem.author} ❤️ {poem.likesCount || 0}
               </Link>
             </li>
           ))}
