@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { useAuth } from '@/lib/firebase/auth';
 
 export default function EditForm({ postId }) {
   const router = useRouter();
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -19,6 +22,8 @@ export default function EditForm({ postId }) {
         console.error('Error fetching post:', error);
         alert('게시글을 불러올 수 없습니다.');
         router.push('/posts');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -27,140 +32,76 @@ export default function EditForm({ postId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
 
     try {
-      await axios.put(`/api/posts/${postId}`, { title, content });
-      router.push('/posts');
+      await axios.put(`/api/posts/${postId}`, {
+        title,
+        content,
+        authorId: user.uid,
+      });
+      router.push(`/posts/${postId}`);
     } catch (error) {
       console.error('Error updating post:', error);
-      alert('수정에 실패했습니다.');
+      if (error?.response?.status === 403) {
+        alert('이 글을 수정할 권한이 없습니다.');
+      } else {
+        alert('수정에 실패했습니다.');
+      }
     }
   };
 
+  if (loading) {
+    return <div className="text-white text-center p-6">불러오는 중...</div>;
+  }
+
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">글 수정</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label className="block font-medium">제목</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="block font-medium">내용</label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-            className="w-full p-2 border rounded h-32"
-          />
-        </div>
-        <div className="flex gap-2">
-          <button 
-            type="button" 
-            onClick={() => router.back()}
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            취소
-          </button>
-          <button 
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            수정
-          </button>
-        </div>
-      </form>
+    <div className="min-h-screen flex items-center justify-center to-black px-4">
+      <div className="w-full max-w-2xl bg-white/10 backdrop-blur-lg rounded-2xl shadow-lg p-8">
+        <h1 className="text-3xl font-bold text-white mb-6 text-center">글 수정</h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">제목</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/40"
+              placeholder="제목을 입력하세요"
+            />
+          </div>
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">내용</label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              required
+              rows={8}
+              className="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/40"
+              placeholder="내용을 입력하세요"
+            />
+          </div>
+          <div className="flex justify-end space-x-4">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="px-4 py-2 rounded-lg bg-gray-500 hover:bg-gray-600 text-white"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              수정
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
-
-// "use client"
-
-// import React, { use, useEffect, useState } from 'react'
-// import { useRouter } from 'next/navigation'
-// import axios from 'axios'
-
-// const EditPage = ({params}) => {
-
-//   const router = useRouter()
-//   const resolvedParams = use(params)
-//   const [title, setTitle] = useState('')
-//   const [content, setContent] = useState('')
-
-//   useEffect(() => {
-//     // 게시글 불러오기
-//     axios
-//       .get(`/api/posts/${resolvedParams.id}`)
-//       .then((res) => {
-//         // res = { data: { title: '제목', content: '내용' } }
-//         setTitle(res.data.title)
-//         setContent(res.data.content)
-//       })
-//       .catch((error) => {
-//         console.error(error)
-//         router.push('/posts')
-//       })
-//   }, [resolvedParams.id, router])
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault()
-//     try {
-//       const res = await axios.put(`/api/posts/${resolvedParams.id}`, {title, content})
-
-//       if (res.status === 201) {
-//         alert('글수정 완료')
-//         router.push('/posts')
-//       } else {
-//         alert('글수정 실패')
-//       }
-
-//     } catch (error) {
-//       console.error(error)
-//       alert('오류 발생')
-//     }
-//   }
-
-//   return (
-//     <div className='container mx-auto'>
-//       <h2 className='sr-only'>포스트 글쓰기</h2>
-//       <form onSubmit={handleSubmit} className='flex flex-col gap-5 h-screen'>
-//         {/* 제목 */}
-//         <div>
-//           <label htmlFor="tit" className='sr-only'>제목</label>
-//           <input 
-//           type="text" 
-//           value={title}
-//           onChange={(e) => setTitle(e.target.value)}
-//           name="tit" id="tit" 
-//           placeholder='제목을 입력하세요.'           
-//           className='text-5xl font-black py-5 border-b-4 border-gray-400 w-full' />
-//         </div>
-
-//         {/* 본문 */}
-//         <div className='flex-1'>
-//           <label htmlFor="cont" className='sr-only'>내용</label>
-//           <textarea 
-//           name="cont" id="cont" 
-//           value={content}
-//           onChange={(e) => setContent(e.target.value)}
-//           placeholder='당신의 이야기를 적어보세요.' 
-//           className='w-full h-full text-2xl'></textarea>
-//         </div>
-
-//         {/* 확인, 취소 */}
-//         <div className='border-t-2 border-gray-300 flex justify-end'>
-//           <button className='p-7 bg-gray-400'>취소</button>
-//           <button type='submit' className='p-7 bg-purple-400'>등록</button>
-//         </div>
-//       </form>
-//     </div>
-//   )
-// }
-
-// export default EditPage

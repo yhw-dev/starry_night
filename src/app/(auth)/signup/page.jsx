@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/firebase/auth";
 import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase/firebase";
+import { auth, googleProvider } from "@/lib/firebase/firebase"; 
 import Button from "@/components/ui/Button";
 import Textfield from "@/components/ui/Textfield";
 

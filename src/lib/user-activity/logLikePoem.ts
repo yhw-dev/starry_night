@@ -4,23 +4,32 @@ import {
   getDoc,
   setDoc,
   deleteDoc,
-  serverTimestamp
+  serverTimestamp,
+  updateDoc,
+  increment,
 } from "firebase/firestore";
 
 export const logLikePoem = async (userId: string, poemId: string) => {
-  const ref = doc(db, "users", userId, "likes", poemId);
-  const snap = await getDoc(ref);
+  const likeRef = doc(db, "users", userId, "likes", poemId);
+  const snap = await getDoc(likeRef);
+  const poemRef = doc(db, "poems", poemId);
 
   if (snap.exists()) {
-    // 이미 좋아요한 경우 삭제 (취소)
-    await deleteDoc(ref);
-    return false; // false = 좋아요 취소됨
+    // 좋아요 취소
+    await deleteDoc(likeRef);
+    await updateDoc(poemRef, {
+      likesCount: increment(-1),
+    });
+    return false;
   } else {
-    // 좋아요 안 한 경우 → 추가
-    await setDoc(ref, {
+    // 좋아요 추가
+    await setDoc(likeRef, {
       liked: true,
       timestamp: serverTimestamp(),
     });
-    return true; // true = 좋아요 추가됨
+    await updateDoc(poemRef, {
+      likesCount: increment(1),
+    });
+    return true;
   }
 };

@@ -18,14 +18,9 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
-  collection,
-  query,
-  where,
-  getDocs,
   updateDoc
 } from 'firebase/firestore';
 
-// AuthContext 생성 (타입 제거)
 const AuthContext = createContext({
   user: null,
   login: async () => {},
@@ -33,7 +28,6 @@ const AuthContext = createContext({
   logout: async () => {},
   loginWithGoogle: async () => {},
   resetPassword: async (email) => {},
-  checkVerifiedEmailExists: async () => false,
 });
 
 export const AuthProvider = ({ children }) => {
@@ -58,7 +52,8 @@ export const AuthProvider = ({ children }) => {
       }
 
       const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, { emailVerified: true });
+      await setDoc(userRef, { emailVerified: true }, { merge: true });
+
       setUser(user);
       return userCredential;
     } catch (err) {
@@ -70,10 +65,7 @@ export const AuthProvider = ({ children }) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    if (name) {
-      await updateProfile(user, { displayName: name });
-    }
-
+    if (name) await updateProfile(user, { displayName: name });
     await sendEmailVerification(user);
 
     const userRef = doc(db, 'users', user.uid);
@@ -99,6 +91,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+
       const userRef = doc(db, 'users', user.uid);
       const snapshot = await getDoc(userRef);
 
@@ -122,21 +115,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const resetPassword = async (email) => {
-    try {
-      await sendPasswordResetEmail(auth, email);
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  const checkVerifiedEmailExists = async (email) => {
-    const q = query(
-      collection(db, 'users'),
-      where('email', '==', email),
-      where('emailVerified', '==', true)
-    );
-    const snapshot = await getDocs(q);
-    return !snapshot.empty;
+    await sendPasswordResetEmail(auth, email);
   };
 
   return (
@@ -148,7 +127,6 @@ export const AuthProvider = ({ children }) => {
         logout,
         loginWithGoogle,
         resetPassword,
-        checkVerifiedEmailExists,
       }}
     >
       {children}

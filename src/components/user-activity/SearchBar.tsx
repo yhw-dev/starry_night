@@ -105,7 +105,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         <button
           onClick={handleSearch}
           aria-label="검색"
-          className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition"
+          className="bg-black text-white p-2 rounded-full hover:bg-gray-700 transition"
         >
           <Search className="w-5 h-5 text-white" />
         </button>

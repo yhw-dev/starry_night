@@ -72,24 +72,37 @@ export default function PostDetailPage({ params }) {
     }
   };
 
-  const handleLike = async () => {
-    if (!user) {
-      alert("로그인이 필요합니다.");
-      return;
-    }
+const handleLike = async () => {
+  if (!user) {
+    alert("로그인이 필요합니다.");
+    console.warn("❌ 좋아요 실패: 로그인된 유저가 없음");
+    return;
+  }
 
-    try {
-      const res = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
-        userId: user.uid, // ✅ 꼭 필요!
-      });
+  // ✅ Optimistic UI 처리
+  const optimisticLiked = !liked;
+  setLiked(optimisticLiked);
+  setLikes((prev) => prev + (optimisticLiked ? 1 : -1));
 
-      setLiked(res.data.liked); // true or false
-      setLikes(res.data.likes); // 좋아요 수
-    } catch (error) {
-      console.error("좋아요 오류:", error);
-      alert("좋아요 처리에 실패했습니다.");
-    }
-  };
+  try {
+    const res = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
+      userId: user.uid,
+    });
+
+    // ✅ 서버 응답과 실제 동기화
+    setLiked(res.data.liked);
+    setLikes(res.data.likes);
+  } catch (error) {
+    console.error("좋아요 오류:", error);
+
+    // ⛔ 실패 시 롤백
+    setLiked((prev) => !prev);
+    setLikes((prev) => prev - (optimisticLiked ? 1 : -1));
+
+    alert("좋아요 처리에 실패했습니다.");
+  }
+};
+
 
   const isAuthor = user && post?.authorId === user.uid; // ✅ 본인 글인지 확인
 
