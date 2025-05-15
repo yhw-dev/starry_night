@@ -1,21 +1,32 @@
-"use client";
+"use client"
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { useAuth } from "@/lib/firebase/auth"; // ✅ 로그인 유저 정보 불러오기
 
 export default function WritePage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const { user } = useAuth(); // ✅ Firebase Auth에서 로그인한 사용자
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
     try {
-      const res = await axios.post("/api/posts", { title, content });
+      const res = await axios.post("/api/posts", {
+        title,
+        content,
+        authorId: user.uid, // ✅ 사용자 UID도 같이 보냄
+      });
 
       if (res.status === 201) {
-        // HTTP 201 Created
         router.push("/posts");
       } else {
         alert("글 작성에 실패했습니다.");

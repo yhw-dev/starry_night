@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from './firebase';
@@ -11,7 +11,8 @@ import {
   signInWithPopup,
   sendEmailVerification,
   updateProfile,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  updateCurrentUser
 } from 'firebase/auth';
 import {
   doc,
@@ -21,7 +22,8 @@ import {
   collection,
   query,
   where,
-  getDocs
+  getDocs,
+  updateDoc
 } from 'firebase/firestore';
 
 interface AuthContextType {
@@ -44,35 +46,35 @@ const AuthContext = createContext<AuthContextType>({
   checkVerifiedEmailExists: async () => false,
 });
 
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
     return () => unsubscribe();
   }, []);
 
- const login = async (email, password) => {
-   try {
-     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-     const user = userCredential.user;
+  const login = async (email, password) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-     await user.reload();
-     if (!user.emailVerified) {
-       await signOut(auth);
-       throw new Error("EMAIL_NOT_VERIFIED");
-     }
+      await user.reload();
+      if (!user.emailVerified) {
+        await signOut(auth);
+        throw new Error('EMAIL_NOT_VERIFIED');
+      }
 
-     const userRef = doc(db, "users", user.uid);
-     await updateDoc(userRef, { emailVerified: true });
-
-     return userCredential;
-   } catch (err) {
-     throw err;
-   }
- };
-
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, { emailVerified: true });
+      setUser(user);
+      return userCredential;
+    } catch (err) {
+      throw err;
+    }
+  };
 
   const register = async (email, password, name) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -84,7 +86,7 @@ export const AuthProvider = ({ children }) => {
 
     await sendEmailVerification(user);
 
-    const userRef = doc(db, "users", user.uid);
+    const userRef = doc(db, 'users', user.uid);
     await setDoc(userRef, {
       uid: user.uid,
       displayName: name ?? null,
@@ -93,11 +95,13 @@ export const AuthProvider = ({ children }) => {
       createdAt: serverTimestamp(),
     });
 
+    setUser(user);
     return userCredential;
   };
 
   const logout = async () => {
     await signOut(auth);
+    setUser(null);
   };
 
   const loginWithGoogle = async () => {
@@ -105,8 +109,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-
-      const userRef = doc(db, "users", user.uid);
+      const userRef = doc(db, 'users', user.uid);
       const snapshot = await getDoc(userRef);
 
       if (!snapshot.exists()) {
@@ -120,9 +123,10 @@ export const AuthProvider = ({ children }) => {
         });
       }
 
+      setUser(user);
       return result;
     } catch (error) {
-      console.error("Google 로그인 실패:", error);
+      console.error('Google 로그인 실패:', error);
       throw error;
     }
   };
@@ -135,27 +139,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
-  const checkVerifiedEmailExists = async (email) => {
+  const checkVerifiedEmailExists = async (email: string) => {
     const q = query(
-      collection(db, "users"),
-      where("email", "==", email),
-      where("emailVerified", "==", true)
+      collection(db, 'users'),
+      where('email', '==', email),
+      where('emailVerified', '==', true)
     );
     const snapshot = await getDocs(q);
     return !snapshot.empty;
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      register,
-      logout,
-      loginWithGoogle,
-      resetPassword,
-      checkVerifiedEmailExists
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        loginWithGoogle,
+        resetPassword,
+        checkVerifiedEmailExists,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
