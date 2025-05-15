@@ -11,8 +11,7 @@ import {
   signInWithPopup,
   sendEmailVerification,
   updateProfile,
-  sendPasswordResetEmail,
-  updateCurrentUser
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import {
   doc,
@@ -26,23 +25,14 @@ import {
   updateDoc
 } from 'firebase/firestore';
 
-interface AuthContextType {
-  user: any;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  checkVerifiedEmailExists: (email: string) => Promise<boolean>;
-}
-
-const AuthContext = createContext<AuthContextType>({
+// AuthContext 생성 (타입 제거)
+const AuthContext = createContext({
   user: null,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
   loginWithGoogle: async () => {},
-  resetPassword: async () => {},
+  resetPassword: async (email) => {},
   checkVerifiedEmailExists: async () => false,
 });
 
@@ -131,7 +121,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const resetPassword = async (email: string): Promise<void> => {
+  const resetPassword = async (email) => {
     try {
       await sendPasswordResetEmail(auth, email);
     } catch (err) {
@@ -139,7 +129,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const checkVerifiedEmailExists = async (email: string) => {
+  const checkVerifiedEmailExists = async (email) => {
     const q = query(
       collection(db, 'users'),
       where('email', '==', email),
