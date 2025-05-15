@@ -1,47 +1,63 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { useAuth } from '@/lib/firebase/auth'
-import Button from '@/components/ui/Button'
-import Textfield from '@/components/ui/Textfield'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuth } from '@/lib/firebase/auth';
+import Button from '@/components/ui/Button';
+import Textfield from '@/components/ui/Textfield';
 
 const Login = () => {
-  const { login, loginWithGoogle, checkVerifiedEmailExists } = useAuth()
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [showResetLink, setShowResetLink] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const {
+    login,
+    loginWithGoogle,
+    resetPassword,
+  } = useAuth();
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [showResetLink, setShowResetLink] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [failCount, setFailCount] = useState(0);
 
   const handleLogin = async (event) => {
-    event.preventDefault()
-    setLoading(true)
-    setError('')
-    setShowResetLink(false)
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+    setShowResetLink(false);
 
     try {
-      const userCredential = await login(email, password)
-      router.push('/')
+      const userCredential = await login(email, password);
+      router.push('/');
     } catch (err) {
-      const emailExists = await checkVerifiedEmailExists(email)
+      console.error('로그인 에러:', err.code, err.message);
 
       if (err.message === 'EMAIL_NOT_VERIFIED') {
-        setError('이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요.')
-      } else if (!emailExists) {
-        setError('존재하지 않는 이메일입니다.')
-      } else {
-        setError('로그인 실패: 잘못된 이메일 또는 비밀번호입니다.')
-        setShowResetLink(true)
+        setError('이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요.');
+        setShowResetLink(true);
+        setLoading(false);
+        return;
       }
 
-      setEmail('')
-      setPassword('')
-      setLoading(false)
+      setFailCount((prev) => prev + 1);
+      setError('이메일 또는 비밀번호가 틀렸습니다.');
+      if (failCount + 1 >= 2) {
+        setShowResetLink(true);
+      }
+
+      setLoading(false);
     }
-  }
+  };
+
+  const handleResetPassword = async () => {
+    try {
+      await resetPassword(email);
+      alert('비밀번호 재설정 메일이 전송되었습니다. 메일함을 확인해주세요.');
+    } catch (err) {
+      alert('비밀번호 재설정 실패: ' + err.message);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -51,11 +67,16 @@ const Login = () => {
         {error && (
           <>
             <p className="text-red-400 text-sm mb-2 text-center">{error}</p>
-            {showResetLink && (
-              <p className="text-center text-sm text-blue-400 underline hover:text-blue-300 transition">
-                <Link href="/forgot-password">비밀번호를 잊으셨나요?</Link>
-              </p>
-            )}
+                {showResetLink && (
+                  <div className="text-center">
+                    <button
+                      onClick={handleResetPassword}
+                      className="text-sm text-blue-400 underline hover:text-blue-300 transition"
+                    >
+                      비밀번호를 재설정하시겠습니까?
+                    </button>
+                  </div>
+                )}
           </>
         )}
 
@@ -64,7 +85,7 @@ const Login = () => {
             type="email"
             placeholder="이메일"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value.trim())}
             className="text-black placeholder:text-gray-600"
           />
           <Textfield
@@ -91,7 +112,7 @@ const Login = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;
