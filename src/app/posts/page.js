@@ -7,17 +7,17 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import SearchBar from "@/components/user-activity/SearchBar";
 import LoadingScreen from "@/components/ui/LoadingScreen";
-import { useAuth } from "@/lib/firebase/auth"; // ✅ 추가
+import { useAuth } from "@/lib/firebase/auth";
 
 export default function PostsPage() {
   const router = useRouter();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth(); // ✅ 추가
+  const { user } = useAuth();
 
   const handleSearch = (keyword) => {
-    console.log("검색 키워드:", keyword);
-    // 추후 router.push로 검색 결과 페이지로 이동 가능
+    if (!keyword) return;
+    router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
   };
 
   useEffect(() => {
@@ -43,7 +43,6 @@ export default function PostsPage() {
         <SearchBar onSearch={handleSearch} />
       </div>
 
-      {/* ✅ 로그인된 사용자만 시 쓰기 버튼 보이게 하기 */}
       {user && (
         <Link href="/posts/write" className="mb-6">
           <Button variant="primary">시 쓰기</Button>
@@ -55,9 +54,15 @@ export default function PostsPage() {
           <Link key={post.id} href={`/posts/${post.id}`} className="block">
             <Card className="w-full">
               <h2 className="text-black text-xl font-bold">{post.title}</h2>
-              <span className="text-gray-500 text-sm">
-                {new Date(post.createdAt).toLocaleDateString()}
-              </span>
+
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-gray-500 text-sm">
+                  {new Date(post.createdAt).toLocaleDateString()}
+                </span>
+                <span className="text-pink-600 text-sm font-semibold">
+                  ❤️ {post.likes}
+                </span>
+              </div>
             </Card>
           </Link>
         ))}
