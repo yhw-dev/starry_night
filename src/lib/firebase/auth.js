@@ -17,11 +17,11 @@ import {
   serverTimestamp
 } from 'firebase/firestore'
 
-// ✅ AuthContext 생성 (초기값은 빈 함수들)
+// ✅ 타입 명세 (선택: JS에서는 생략 가능)
 const AuthContext = createContext({
   user: null,
-  login: async () => {},
-  register: async () => {},
+  login: async (_email, _password) => {},
+  register: async (_email, _password) => {},
   logout: async () => {},
   loginWithGoogle: async () => {},
 })
@@ -31,12 +31,15 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser)
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser)
+    })
     return () => unsubscribe()
   }, [])
 
   const login = async (email, password) => {
-    await signInWithEmailAndPassword(auth, email, password)
+    const result = await signInWithEmailAndPassword(auth, email, password)
+    setUser(result.user)
   }
 
   const register = async (email, password) => {
@@ -87,5 +90,5 @@ export const AuthProvider = ({ children }) => {
   )
 }
 
-// ✅ 커스텀 훅
+// ✅ 커스텀 훅: 어디서든 로그인 정보 불러오기 가능
 export const useAuth = () => useContext(AuthContext)
