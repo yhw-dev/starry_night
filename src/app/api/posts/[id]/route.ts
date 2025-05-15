@@ -22,8 +22,8 @@ async function isAuthorMatch(postId: number, authorId: string) {
 }
 
 // GET: 게시글 조회
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
-  const id = parseInt(params.id);
+export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   try {
     const result = await pool.query('SELECT * FROM poems WHERE id = $1', [id]);
@@ -40,8 +40,9 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
 }
 
 // PUT: 게시글 수정
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = parseInt(params.id);
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const postId = parseInt(id); // ✅ 변환
   const { title, content, authorId } = await request.json();
 
   try {
@@ -55,7 +56,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const result = await pool.query(
       `UPDATE poems SET title = $1, content = $2 WHERE id = $3 RETURNING *`,
-      [title, content, id]
+      [title, content, postId]
     );
 
     return NextResponse.json(formatPost(result.rows[0]), { status: 200 });
@@ -66,8 +67,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE: 게시글 삭제
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = parseInt(params.id);
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const postId = parseInt(id); // ✅ 변환
   const { authorId } = await request.json();
 
   try {
@@ -79,7 +81,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: '삭제 권한이 없습니다.' }, { status: 403 });
     }
 
-    const result = await pool.query('DELETE FROM poems WHERE id = $1 RETURNING *', [id]);
+    const result = await pool.query('DELETE FROM poems WHERE id = $1 RETURNING *', [postId]);
 
     return NextResponse.json(
       { message: '삭제 완료', deleted: formatPost(result.rows[0]) },
