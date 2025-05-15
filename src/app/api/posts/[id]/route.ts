@@ -1,13 +1,5 @@
-// app/api/posts/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import pool from '@/lib/db'
-
-// 타입 정의
-interface RouteContext {
-  params: {
-    id: string
-  }
-}
 
 // 공통 포맷터 (created_at → createdAt 등)
 function formatPost(row: any) {
@@ -21,13 +13,9 @@ function formatPost(row: any) {
   }
 }
 
-// GET: 게시글 상세 조회
-export async function GET(
-  _: NextRequest,
-  context: RouteContext
-) {
-  const { params } = context
-  const id = parseInt(params.id)
+// GET: 게시글 조회
+export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   try {
     const result = await pool.query('SELECT * FROM poems WHERE id = $1', [id])
@@ -44,20 +32,13 @@ export async function GET(
 }
 
 // PUT: 게시글 수정
-export async function PUT(
-  request: NextRequest,
-  context: RouteContext
-) {
-  const { params } = context
-  const id = parseInt(params.id)
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { title, content } = await request.json()
 
   try {
     const result = await pool.query(
-      `UPDATE poems 
-       SET title = $1, content = $2
-       WHERE id = $3
-       RETURNING *`,
+      `UPDATE poems SET title = $1, content = $2 WHERE id = $3 RETURNING *`,
       [title, content, id]
     )
 
@@ -73,12 +54,8 @@ export async function PUT(
 }
 
 // DELETE: 게시글 삭제
-export async function DELETE(
-  _: NextRequest,
-  context: RouteContext
-) {
-  const { params } = context
-  const id = parseInt(params.id)
+export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   try {
     const result = await pool.query('DELETE FROM poems WHERE id = $1 RETURNING *', [id])

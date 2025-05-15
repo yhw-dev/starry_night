@@ -7,7 +7,7 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 
-export const toggleLikePoem = async (userId: string, poemId: string) => {
+export const logLikePoem = async (userId: string, poemId: string) => {
   const ref = doc(db, "users", userId, "likes", poemId);
   const snap = await getDoc(ref);
 
