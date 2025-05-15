@@ -1,17 +1,26 @@
-//src/app/posts/[id]/page.js
 "use client";
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import Button from "@/components/ui/Button";
+import { useAuth } from "@/lib/firebase/auth"; // ✅ 추가: 로그인 유저 정보
 
 export default function PostDetailPage({ params }) {
   const router = useRouter();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [likes, setLikes] = useState(0);
-  const resolvedParams = use(params); // params 객체를 풀어서 사용
+  const resolvedParams = use(params);
+  const { user } = useAuth(); // ✅ 로그인 유저 정보
+
+  useEffect(() => {
+    if (post && user) {
+      console.log("✅ 작성자 ID(post.authorId):", post.authorId);
+      console.log("✅ 현재 로그인한 사용자(user.uid):", user.uid);
+      console.log("⛔ 일치 여부:", post.authorId === user.uid);
+    }
+  }, [post, user]);
 
   useEffect(() => {
     axios
@@ -33,7 +42,9 @@ export default function PostDetailPage({ params }) {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
     try {
-      const res = await axios.delete(`/api/posts/${resolvedParams.id}`);
+      const res = await axios.delete(`/api/posts/${resolvedParams.id}`, {
+        data: { authorId: user.uid },
+      });
       if (res.status === 200) {
         router.push("/posts");
       } else {
@@ -53,6 +64,8 @@ export default function PostDetailPage({ params }) {
       alert("좋아요 처리에 실패했습니다.");
     }
   };
+
+  const isAuthor = user && post?.authorId === user.uid; // ✅ 본인 글인지 확인
 
   if (loading) return <div>로딩 중...</div>;
   if (!post) return <div>게시글을 찾을 수 없습니다.</div>;
@@ -82,16 +95,21 @@ export default function PostDetailPage({ params }) {
           </button>
         </div>
 
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-4 mt-6">
           <Link href="/posts">
             <Button variant="primary">목록</Button>
           </Link>
-          <Link href={`/posts/${resolvedParams.id}/edit`}>
-            <Button variant="primary">수정</Button>
-          </Link>
-          <Button onClick={handleDelete} variant="secondary">
-            삭제
-          </Button>
+
+          {isAuthor && (
+            <>
+              <Link href={`/posts/${resolvedParams.id}/edit`}>
+                <Button variant="primary">수정</Button>
+              </Link>
+              <Button onClick={handleDelete} variant="secondary">
+                삭제
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
