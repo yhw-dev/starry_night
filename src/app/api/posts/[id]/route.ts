@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const { title, content, authorId } = await request.json();
 
   try {
-    const { match, notFound } = await isAuthorMatch(id, authorId);
+    const { match, notFound } = await isAuthorMatch(postId, authorId);
     if (notFound) {
       return NextResponse.json({ error: '게시글이 존재하지 않습니다.' }, { status: 404 });
     }
@@ -73,7 +73,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const { authorId } = await request.json();
 
   try {
-    const { match, notFound } = await isAuthorMatch(id, authorId);
+    const { match, notFound } = await isAuthorMatch(postId, authorId);
     if (notFound) {
       return NextResponse.json({ error: '게시글이 존재하지 않습니다.' }, { status: 404 });
     }
