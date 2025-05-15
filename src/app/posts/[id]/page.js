@@ -5,6 +5,8 @@ import Link from "next/link";
 import axios from "axios";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/lib/firebase/auth"; // ✅ 추가: 로그인 유저 정보
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/firebase"; // ✅ 이미 있을 수도 있어
 
 export default function PostDetailPage({ params }) {
   const router = useRouter();
@@ -13,14 +15,28 @@ export default function PostDetailPage({ params }) {
   const [likes, setLikes] = useState(0);
   const resolvedParams = use(params);
   const { user } = useAuth(); // ✅ 로그인 유저 정보
+  const [authorName, setAuthorName] = useState(null); // 🔼 useState는 상단에!
 
   useEffect(() => {
-    if (post && user) {
-      console.log("✅ 작성자 ID(post.authorId):", post.authorId);
-      console.log("✅ 현재 로그인한 사용자(user.uid):", user.uid);
-      console.log("⛔ 일치 여부:", post.authorId === user.uid);
-    }
-  }, [post, user]);
+    const fetchAuthorName = async () => {
+      if (post?.authorId) {
+        try {
+          const ref = doc(db, "users", post.authorId);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            setAuthorName(snap.data().displayName || "익명");
+          } else {
+            setAuthorName("탈퇴한 사용자");
+          }
+        } catch (e) {
+          console.error("작성자 이름 불러오기 실패:", e);
+          setAuthorName("알 수 없음");
+        }
+      }
+    };
+
+    fetchAuthorName();
+  }, [post?.authorId]); // 🔁 post가 준비된 이후에 실행됨
 
   useEffect(() => {
     axios
@@ -76,6 +92,9 @@ export default function PostDetailPage({ params }) {
         <h1 className="text-4xl font-bold mb-4 drop-shadow-lg animate-fade-in">
           {post.title}
         </h1>
+        <p className="text-sm text-gray-300 mb-6">
+          {authorName || "..."}<br/>
+        </p>
         <p className="text-sm text-gray-300 mb-6">
           {new Date(post.createdAt).toLocaleDateString()}
         </p>
