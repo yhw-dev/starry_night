@@ -8,11 +8,14 @@ import Button from "@/components/ui/Button";
 import SearchBar from "@/components/user-activity/SearchBar";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { useAuth } from "@/lib/firebase/auth";
+import { db } from "@/lib/firebase/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function PostsPage() {
   const router = useRouter();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [authorNames, setAuthorNames] = useState({});
   const { user } = useAuth();
 
   const handleSearch = (keyword) => {
@@ -23,9 +26,30 @@ export default function PostsPage() {
   useEffect(() => {
     axios
       .get("/api/posts")
-      .then((res) => {
-        setPosts(res.data);
+      .then(async (res) => {
+        const postsData = res.data;
+        setPosts(postsData);
         setLoading(false);
+
+        // 작성자 이름 가져오기
+        const nameMap = {};
+        for (const post of postsData) {
+          const uid = post.authorId;
+          if (!uid || nameMap[uid]) continue;
+
+          try {
+            const snap = await getDoc(doc(db, "users", uid));
+            if (snap.exists()) {
+              nameMap[uid] = snap.data().displayName || "익명";
+            } else {
+              nameMap[uid] = "탈퇴한 사용자";
+            }
+          } catch (err) {
+            console.error("작성자 이름 로드 실패:", err);
+            nameMap[uid] = "알 수 없음";
+          }
+        }
+        setAuthorNames(nameMap);
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -62,6 +86,10 @@ export default function PostsPage() {
                 <span className="text-pink-600 text-sm font-semibold">
                   ❤️ {post.likes}
                 </span>
+              </div>
+
+              <div className="text-gray-600 text-sm mt-1">
+                ✏️ {authorNames[post.authorId] || "불러오는 중..."}
               </div>
             </Card>
           </Link>
