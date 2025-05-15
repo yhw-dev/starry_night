@@ -5,22 +5,39 @@ import Link from "next/link";
 import axios from "axios";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/lib/firebase/auth"; // ✅ 추가: 로그인 유저 정보
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/firebase"; // ✅ 이미 있을 수도 있어
 
 export default function PostDetailPage({ params }) {
   const router = useRouter();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(0);
   const resolvedParams = use(params);
   const { user } = useAuth(); // ✅ 로그인 유저 정보
+  const [authorName, setAuthorName] = useState(null); // 🔼 useState는 상단에!
 
   useEffect(() => {
-    if (post && user) {
-      console.log("✅ 작성자 ID(post.authorId):", post.authorId);
-      console.log("✅ 현재 로그인한 사용자(user.uid):", user.uid);
-      console.log("⛔ 일치 여부:", post.authorId === user.uid);
-    }
-  }, [post, user]);
+    const fetchAuthorName = async () => {
+      if (post?.authorId) {
+        try {
+          const ref = doc(db, "users", post.authorId);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            setAuthorName(snap.data().displayName || "익명");
+          } else {
+            setAuthorName("탈퇴한 사용자");
+          }
+        } catch (e) {
+          console.error("작성자 이름 불러오기 실패:", e);
+          setAuthorName("알 수 없음");
+        }
+      }
+    };
+
+    fetchAuthorName();
+  }, [post?.authorId]); // 🔁 post가 준비된 이후에 실행됨
 
   useEffect(() => {
     axios
@@ -56,9 +73,18 @@ export default function PostDetailPage({ params }) {
   };
 
   const handleLike = async () => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
     try {
-      const res = await axios.post(`/api/posts/${resolvedParams.id}/like`);
-      setLikes(res.data.likes);
+      const res = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
+        userId: user.uid, // ✅ 꼭 필요!
+      });
+
+      setLiked(res.data.liked); // true or false
+      setLikes(res.data.likes); // 좋아요 수
     } catch (error) {
       console.error("좋아요 오류:", error);
       alert("좋아요 처리에 실패했습니다.");
@@ -77,6 +103,10 @@ export default function PostDetailPage({ params }) {
           {post.title}
         </h1>
         <p className="text-sm text-gray-300 mb-6">
+          {authorName || "..."}
+          <br />
+        </p>
+        <p className="text-sm text-gray-300 mb-6">
           {new Date(post.createdAt).toLocaleDateString()}
         </p>
 
@@ -89,9 +119,13 @@ export default function PostDetailPage({ params }) {
         <div className="mt-6 flex justify-center items-center gap-4">
           <button
             onClick={handleLike}
-            className="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded-xl shadow transition"
+            className={`${
+              liked
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-gray-600 hover:bg-gray-700"
+            } text-white font-semibold py-2 px-4 rounded-xl shadow transition`}
           >
-            ❤️ 좋아요 {likes}
+            {liked ? "❤️ 좋아요" : "🤍 좋아요"} {likes}
           </button>
         </div>
 

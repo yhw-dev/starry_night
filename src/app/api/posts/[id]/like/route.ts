@@ -1,26 +1,54 @@
-import { NextRequest, NextResponse } from 'next/server'
-import pool from '@/lib/db'
+import { NextRequest, NextResponse } from 'next/server';
+import pool from '@/lib/db';
 
 // POST: /api/posts/[id]/like
 export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> } // ✅ 이렇게 명시적으로 params만 구조분해
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const { userId } = await req.json();
+
+  if (!userId) {
+    return NextResponse.json({ error: 'userId가 필요합니다.' }, { status: 400 });
+  }
 
   try {
-    const result = await pool.query(
-      'UPDATE poems SET likes = likes + 1 WHERE id = $1 RETURNING likes',
-      [id]
-    )
+    // 1. 사용자가 이미 좋아요를 눌렀는지 확인
+    const existing = await pool.query(
+      'SELECT 1 FROM poem_likes WHERE user_id = $1 AND poem_id = $2',
+      [userId, id]
+    );
 
-    if (result.rowCount === 0) {
-      return NextResponse.json({ error: '게시글 없음' }, { status: 404 })
+    if ((existing?.rowCount ?? 0) > 0) {
+      // 이미 눌렀다면 → 좋아요 취소
+      await pool.query(
+        'DELETE FROM poem_likes WHERE user_id = $1 AND poem_id = $2',
+        [userId, id]
+      );
+
+      const updated = await pool.query(
+        'UPDATE poems SET likes = likes - 1 WHERE id = $1 RETURNING likes',
+        [id]
+      );
+
+      return NextResponse.json({ liked: false, likes: updated.rows[0].likes }, { status: 200 });
+    } else {
+      // 안 눌렀다면 → 좋아요 추가
+      await pool.query(
+        'INSERT INTO poem_likes (user_id, poem_id) VALUES ($1, $2)',
+        [userId, id]
+      );
+
+      const updated = await pool.query(
+        'UPDATE poems SET likes = likes + 1 WHERE id = $1 RETURNING likes',
+        [id]
+      );
+
+      return NextResponse.json({ liked: true, likes: updated.rows[0].likes }, { status: 200 });
     }
-
-    return NextResponse.json({ likes: result.rows[0].likes }, { status: 200 })
   } catch (error) {
-    console.error(`LIKE 오류 (id=${id}):`, error)
-    return NextResponse.json({ error: '서버 오류' }, { status: 500 })
+    console.error(`LIKE 토글 오류 (id=${id}):`, error);
+    return NextResponse.json({ error: '서버 오류' }, { status: 500 });
   }
 }
