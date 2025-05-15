@@ -19,7 +19,8 @@ export default function Card({ children, className }: CardProps) {
         'duration-300',
         'hover:bg-white',
         'hover:text-black',
-        'hover:animate-glow',className)}>
+        'hover:animate-glowFade'
+        ,className)}>
       {children}
     </div>
   )
