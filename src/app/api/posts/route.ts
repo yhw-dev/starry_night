@@ -1,4 +1,3 @@
-// app/api/posts/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
@@ -6,18 +5,18 @@ import pool from '@/lib/db';
 export async function GET() {
   try {
     const result = await pool.query(`
-      SELECT id, title, content, created_date, likes
+      SELECT id, title, content, created_date, likes, author
       FROM poems 
       ORDER BY created_date DESC
     `);
 
-    // created_at → createdAt 이름 변경 (프론트 호환)
     const posts = result.rows.map((row) => ({
       id: row.id,
       title: row.title,
       content: row.content,
       createdAt: row.created_date,
       likes: row.likes,
+      authorId: row.author, // ✅ author도 포함시켜서 반환
     }));
 
     return NextResponse.json(posts, { status: 200 });
@@ -34,20 +33,20 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
-    const { title, content } = data;
+    const { title, content, authorId } = data;
 
-    if (!title || !content) {
+    if (!title || !content || !authorId) {
       return NextResponse.json(
-        { error: '제목과 내용은 필수입니다.' },
+        { error: '제목, 내용, 사용자 정보는 필수입니다.' },
         { status: 400 }
       );
     }
 
     const result = await pool.query(
-      `INSERT INTO poems (title, content, created_date, likes)
-       VALUES ($1, $2, NOW(), 0)
-       RETURNING id, title, content, created_date, likes`,
-      [title, content]
+      `INSERT INTO poems (title, content, author, created_date, likes)
+       VALUES ($1, $2, $3, NOW(), 0)
+       RETURNING id, title, content, created_date, likes, author`,
+      [title, content, authorId] // ✅ UID 저장
     );
 
     const newPost = {
@@ -56,6 +55,7 @@ export async function POST(req: NextRequest) {
       content: result.rows[0].content,
       createdAt: result.rows[0].created_date,
       likes: result.rows[0].likes,
+      authorId: result.rows[0].author,
     };
 
     return NextResponse.json(newPost, { status: 201 });
