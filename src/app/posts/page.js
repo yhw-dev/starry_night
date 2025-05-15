@@ -16,8 +16,8 @@ export default function PostsPage() {
   const { user } = useAuth(); // ✅ 추가
 
   const handleSearch = (keyword) => {
-    console.log("검색 키워드:", keyword);
-    // 추후 router.push로 검색 결과 페이지로 이동 가능
+    if (!keyword) return;
+    router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
   };
 
   useEffect(() => {

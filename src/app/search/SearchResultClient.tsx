@@ -15,15 +15,24 @@ interface Post {
 export default function SearchResultClient() {
   const searchParams = useSearchParams();
   const keyword = searchParams.get("keyword") || "";
-  const [results, setResults] = useState<Post[]>([]); // ✅ 타입 지정
+  const [results, setResults] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!keyword) return;
 
+    setLoading(true);
+
     fetch(`/api/search?keyword=${encodeURIComponent(keyword)}`)
       .then((res) => res.json())
-      .then(setResults)
-      .catch(console.error);
+      .then((data) => {
+        setResults(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("검색 오류:", error);
+        setLoading(false);
+      });
   }, [keyword]);
 
   return (
@@ -33,15 +42,21 @@ export default function SearchResultClient() {
         “{keyword}” 검색 결과
       </h1>
 
-      {results.length === 0 ? (
-        <p>결과가 없습니다.</p>
+      {loading ? (
+        <p className="text-gray-300">검색 중...</p>
+      ) : results.length === 0 ? (
+        <p className="text-gray-400">“{keyword}”에 대한 결과가 없습니다.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {results.map((post) => (
             <Link key={post.id} href={`/posts/${post.id}`}>
-              <Card className="w-full">
+              <Card className="w-full hover:bg-white/90 transition">
                 <h2 className="text-black text-xl font-bold">{post.title}</h2>
-                <p className="text-gray-600">{post.content}</p>
+                <p className="text-gray-700 text-sm mt-1">
+                  {post.content.length > 80
+                    ? post.content.slice(0, 80) + "..."
+                    : post.content}
+                </p>
               </Card>
             </Link>
           ))}
