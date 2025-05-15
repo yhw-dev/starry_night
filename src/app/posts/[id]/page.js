@@ -12,6 +12,7 @@ export default function PostDetailPage({ params }) {
   const router = useRouter();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(0);
   const resolvedParams = use(params);
   const { user } = useAuth(); // ✅ 로그인 유저 정보
@@ -72,9 +73,18 @@ export default function PostDetailPage({ params }) {
   };
 
   const handleLike = async () => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
     try {
-      const res = await axios.post(`/api/posts/${resolvedParams.id}/like`);
-      setLikes(res.data.likes);
+      const res = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
+        userId: user.uid, // ✅ 꼭 필요!
+      });
+
+      setLiked(res.data.liked); // true or false
+      setLikes(res.data.likes); // 좋아요 수
     } catch (error) {
       console.error("좋아요 오류:", error);
       alert("좋아요 처리에 실패했습니다.");
@@ -93,7 +103,8 @@ export default function PostDetailPage({ params }) {
           {post.title}
         </h1>
         <p className="text-sm text-gray-300 mb-6">
-          {authorName || "..."}<br/>
+          {authorName || "..."}
+          <br />
         </p>
         <p className="text-sm text-gray-300 mb-6">
           {new Date(post.createdAt).toLocaleDateString()}
@@ -108,9 +119,13 @@ export default function PostDetailPage({ params }) {
         <div className="mt-6 flex justify-center items-center gap-4">
           <button
             onClick={handleLike}
-            className="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded-xl shadow transition"
+            className={`${
+              liked
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-gray-600 hover:bg-gray-700"
+            } text-white font-semibold py-2 px-4 rounded-xl shadow transition`}
           >
-            ❤️ 좋아요 {likes}
+            {liked ? "❤️ 좋아요" : "🤍 좋아요"} {likes}
           </button>
         </div>
 
