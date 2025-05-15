@@ -99,7 +99,11 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            const keyword = e.target.value;
+            setInput(keyword);
+            onSearch(keyword); // ✅ 실시간 검색 기능 추가
+          }}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder="시를 찾아보세요..."
           className="bg-transparent text-white placeholder-white/70 outline-none w-full"
