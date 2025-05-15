@@ -21,7 +21,6 @@ interface FirebaseUser {
   uid: string;
   email?: string;
   displayName?: string;
-  // 필요한 필드 더 추가 가능
 }
 
 export default function SearchBar({ onSearch }: SearchBarProps) {
@@ -30,7 +29,6 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   const { user } = useAuth() as { user: FirebaseUser | null };
   const RECENT_KEY = "recent_search_keywords";
 
-  // 🔄 Load keywords from localStorage or Firestore
   useEffect(() => {
     const loadKeywords = async () => {
       if (user) {
@@ -47,7 +45,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   }, [user]);
 
   const saveKeyword = async (keyword: string) => {
-    let updated = [keyword, ...recentKeywords.filter(k => k !== keyword)];
+    let updated = [keyword, ...recentKeywords.filter((k) => k !== keyword)];
     if (updated.length > 5) updated = updated.slice(0, 5);
     setRecentKeywords(updated);
 
@@ -62,7 +60,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   };
 
   const deleteKeyword = async (target: string) => {
-    const updated = recentKeywords.filter(k => k !== target);
+    const updated = recentKeywords.filter((k) => k !== target);
     setRecentKeywords(updated);
 
     if (user) {
@@ -78,7 +76,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   const handleSearch = async () => {
     const keyword = input.trim();
     if (!keyword) return;
-
+    
     if (user) {
       await addDoc(collection(db, "user_logs"), {
         userId: user.uid,
@@ -90,7 +88,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
 
     await saveKeyword(keyword);
     onSearch(keyword);
-    setInput("");
+    setInput(""); // 입력창 초기화 (선택 사항)
   };
 
   return (
@@ -99,11 +97,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         <input
           type="text"
           value={input}
-          onChange={(e) => {
-            const keyword = e.target.value;
-            setInput(keyword);
-            onSearch(keyword); // ✅ 실시간 검색 기능 추가
-          }}
+          onChange={(e) => setInput(e.target.value)} // ✅ 실시간 검색 제거
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder="시를 찾아보세요..."
           className="bg-transparent text-white placeholder-white/70 outline-none w-full"
@@ -127,7 +121,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
               <button
                 onClick={() => {
                   setInput(word);
-                  onSearch(word);
+                  onSearch(word); // ✅ 최근 검색어 눌렀을 때만 검색
                 }}
               >
                 {word}
