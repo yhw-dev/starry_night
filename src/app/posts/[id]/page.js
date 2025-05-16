@@ -107,7 +107,7 @@ export default function PostDetailPage({ params }) {
 
   const isAuthor = user && post?.authorId === user.uid; // ✅ 본인 글인지 확인
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen message="찾아가는 중이에요"/>;
   if (!post) return <div>게시글을 찾을 수 없습니다.</div>;
 
   return (
