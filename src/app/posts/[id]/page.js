@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import Button from "@/components/ui/Button";
-import { useAuth } from "@/lib/firebase/auth"; // ✅ 추가: 로그인 유저 정보
+import { useAuth } from "@/lib/firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase/firebase"; // ✅ 이미 있을 수도 있어
+import { db } from "@/lib/firebase/firebase";
+import Card from "@/components/ui/Card";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 export default function PostDetailPage({ params }) {
   const router = useRouter();
@@ -15,8 +17,35 @@ export default function PostDetailPage({ params }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(0);
   const resolvedParams = use(params);
-  const { user } = useAuth(); // ✅ 로그인 유저 정보
-  const [authorName, setAuthorName] = useState(null); // 🔼 useState는 상단에!
+  const { user } = useAuth();
+  const [authorName, setAuthorName] = useState(null);
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      try {
+        const res = await axios.get(`/api/posts/${resolvedParams.id}`);
+        setPost(res.data);
+        setLikes(res.data.likes);
+        setLoading(false);
+
+        // ✅ 사용자 좋아요 여부 확인
+        if (user) {
+          const res2 = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
+            userId: user.uid,
+          });
+          setLiked(res2.data.liked); // ✅ 초기화
+          setLikes(res2.data.likes); // 동기화
+        }
+      } catch (error) {
+        console.error("게시글 로드 오류:", error);
+        setLoading(false);
+        alert("게시글을 불러올 수 없습니다.");
+        router.push("/posts");
+      }
+    };
+
+    fetchPost();
+  }, [resolvedParams.id, router, user]);
 
   useEffect(() => {
     const fetchAuthorName = async () => {
@@ -37,23 +66,7 @@ export default function PostDetailPage({ params }) {
     };
 
     fetchAuthorName();
-  }, [post?.authorId]); // 🔁 post가 준비된 이후에 실행됨
-
-  useEffect(() => {
-    axios
-      .get(`/api/posts/${resolvedParams.id}`)
-      .then((res) => {
-        setPost(res.data);
-        setLikes(res.data.likes);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        setLoading(false);
-        alert("게시글을 불러올 수 없습니다.");
-        router.push("/posts");
-      });
-  }, [resolvedParams.id, router]);
+  }, [post?.authorId]);
 
   const handleDelete = async () => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
@@ -72,41 +85,33 @@ export default function PostDetailPage({ params }) {
     }
   };
 
-const handleLike = async () => {
-  if (!user) {
-    alert("로그인이 필요합니다.");
-    console.warn("❌ 좋아요 실패: 로그인된 유저가 없음");
-    return;
-  }
+  const handleLike = async () => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
 
-  // ✅ Optimistic UI 처리
-  const optimisticLiked = !liked;
-  setLiked(optimisticLiked);
-  setLikes((prev) => prev + (optimisticLiked ? 1 : -1));
+    const optimisticLiked = !liked;
+    setLiked(optimisticLiked);
+    setLikes((prev) => prev + (optimisticLiked ? 1 : -1));
 
-  try {
-    const res = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
-      userId: user.uid,
-    });
+    try {
+      const res = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
+        userId: user.uid,
+      });
+      setLiked(res.data.liked);
+      setLikes(res.data.likes);
+    } catch (error) {
+      console.error("좋아요 오류:", error);
+      setLiked((prev) => !prev);
+      setLikes((prev) => prev - (optimisticLiked ? 1 : -1));
+      alert("좋아요 처리에 실패했습니다.");
+    }
+  };
 
-    // ✅ 서버 응답과 실제 동기화
-    setLiked(res.data.liked);
-    setLikes(res.data.likes);
-  } catch (error) {
-    console.error("좋아요 오류:", error);
+  const isAuthor = user && post?.authorId === user.uid;
 
-    // ⛔ 실패 시 롤백
-    setLiked((prev) => !prev);
-    setLikes((prev) => prev - (optimisticLiked ? 1 : -1));
-
-    alert("좋아요 처리에 실패했습니다.");
-  }
-};
-
-
-  const isAuthor = user && post?.authorId === user.uid; // ✅ 본인 글인지 확인
-
-  if (loading) return <div>로딩 중...</div>;
+  if (loading) return <LoadingScreen message="찾아가는 중이에요" />;
   if (!post) return <div>게시글을 찾을 수 없습니다.</div>;
 
   return (
@@ -115,31 +120,27 @@ const handleLike = async () => {
         <h1 className="text-4xl font-bold mb-4 drop-shadow-lg animate-fade-in">
           {post.title}
         </h1>
-        <p className="text-sm text-gray-300 mb-6">
-          {authorName || "..."}
-          <br />
+        <p className="text-sm text-gray-300 mb-1">
+          ✏️ {authorName || "..."}
         </p>
         <p className="text-sm text-gray-300 mb-6">
           {new Date(post.createdAt).toLocaleDateString()}
         </p>
 
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 mb-8 shadow-md max-w-lg mx-auto">
-          <p className="text-lg leading-relaxed text-gray-100 whitespace-pre-wrap">
+        <Card likes={likes} className="mb-8 max-w-lg mx-auto">
+          <p className="text-lg leading-relaxed whitespace-pre-wrap">
             {post.content}
           </p>
-        </div>
+        </Card>
 
         <div className="mt-6 flex justify-center items-center gap-4">
-          <button
+          <Button
             onClick={handleLike}
-            className={`${
-              liked
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-gray-600 hover:bg-gray-700"
-            } text-white font-semibold py-2 px-4 rounded-xl shadow transition`}
+            variant={liked ? "secondary" : "primary"}
+            className="py-2 px-4 rounded-xxl shadow"
           >
-            {liked ? "❤️ 좋아요" : "🤍 좋아요"} {likes}
-          </button>
+            {liked ? "🩵 좋아요" : "🤍 좋아요"} {likes}
+          </Button>
         </div>
 
         <div className="flex justify-center gap-4 mt-6">

@@ -29,13 +29,18 @@ const lines = [
   </>,
 ];
 
+// 세로선은 div로, 문장은 fragment로 분리
 const finalLines = [
-  ".",
-  ".",
-  ".",
-  <>
-    당신의 <span className="font-bold">별</span>에는 어떤 이야기가 담겨있나요?
-  </>,
+  { type: "divider" },
+  {
+    type: "text",
+    content: (
+      <>
+        당신의 <span className="font-bold">별</span>에는 어떤 이야기가
+        담겨있나요?
+      </>
+    ),
+  },
 ];
 
 export default function Home() {
@@ -43,9 +48,11 @@ export default function Home() {
   const [visibleFinal, setVisibleFinal] = useState(false);
   const canvasRef = useRef(null);
   const meteors = useRef([]);
+  const intervalRef = useRef(null);
+  const animationRef = useRef(null);
 
-  const { user } = useAuth(); // ✅ 로그인 정보
-  const router = useRouter(); // ✅ 페이지 이동
+  const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const timers = [];
@@ -77,15 +84,18 @@ export default function Home() {
     canvas.height = height;
 
     const createMeteor = () => {
-      const speed = 1.5;
+      const speed = 3;
+      const startX = Math.random() * width * 1.2 - width * 0.2;
       meteors.current.push({
-        x: Math.random() * width * 0.5,
-        y: Math.random() * height * 0.5,
+        x: startX,
+        y: Math.random() * height * 0.2,
         vx: speed,
         vy: speed,
-        opacity: 1,
+        opacity: 0,
       });
     };
+
+    const fadeInSpeed = 0.005;
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
@@ -93,7 +103,11 @@ export default function Home() {
       meteors.current.forEach((m) => {
         m.x += m.vx;
         m.y += m.vy;
-        m.opacity -= 0.008;
+
+        if (m.opacity < 1) {
+          m.opacity += fadeInSpeed;
+          if (m.opacity > 1) m.opacity = 1;
+        }
 
         const tailLength = 200;
         const angle = Math.atan2(m.vy, m.vx);
@@ -112,15 +126,44 @@ export default function Home() {
         ctx.stroke();
       });
 
-      meteors.current = meteors.current.filter((m) => m.opacity > 0);
-      requestAnimationFrame(animate);
+      meteors.current = meteors.current.filter((m) => m.y < height + 100);
+
+      animationRef.current = requestAnimationFrame(animate);
     };
 
-    animate();
+    const startMeteor = () => {
+      if (!intervalRef.current) {
+        intervalRef.current = setInterval(() => {
+          if (Math.random() < 0.9) createMeteor();
+        }, 600);
+      }
+      if (!animationRef.current) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
 
-    const interval = setInterval(() => {
-      if (Math.random() < 0.9) createMeteor();
-    }, 500 + Math.random() * 1000);
+    const stopMeteor = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      meteors.current = [];
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        startMeteor();
+      } else {
+        stopMeteor();
+      }
+    };
+
+    startMeteor();
+    document.addEventListener("visibilitychange", handleVisibility);
 
     const handleResize = () => {
       width = window.innerWidth;
@@ -132,8 +175,9 @@ export default function Home() {
     window.addEventListener("resize", handleResize);
 
     return () => {
-      clearInterval(interval);
+      stopMeteor();
       window.removeEventListener("resize", handleResize);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
 
@@ -143,7 +187,9 @@ export default function Home() {
         ref={canvasRef}
         className="fixed top-0 left-0 w-full h-full pointer-events-none z-0"
       />
-      <main className={`${styles.main} flex flex-col items-center justify-center mt-[-10rem] relative z-10`}>
+      <main
+        className={`${styles.main} flex flex-col items-center justify-center mt-[-10rem] relative z-10`}
+      >
         <div className="text-xl leading-relaxed text-center space-y-1">
           {lines.map((line, index) => (
             <p
@@ -155,17 +201,32 @@ export default function Home() {
             </p>
           ))}
 
-          {finalLines.map((line, index) => (
-            <p
-              key={`final-${index}`}
-              className={`transition-opacity duration-1000 ease-in ${
-                index === finalLines.length - 1 ? "text-3xl" : ""
-              }`}
-              style={{ opacity: visibleFinal ? 1 : 0 }}
-            >
-              {line}
-            </p>
-          ))}
+          {finalLines.map((line, index) => {
+            if (line.type === "divider") {
+              return (
+                <div
+                  key={`final-${index}`}
+                  className="w-px h-20 bg-white mx-auto my-20 transition-opacity duration-1000 ease-in"
+                  style={{
+                    opacity: visibleFinal ? 1 : 0,
+                    height: "8rem", // 선 길이 늘림 (h-32)
+                    marginTop: "1.5rem", // 위쪽 간격
+                    marginBottom: "1.5rem", // 아래쪽 간격
+                  }}
+                />
+              );
+            }
+
+            return (
+              <p
+                key={`final-${index}`}
+                className="text-3xl transition-opacity duration-1000 ease-in"
+                style={{ opacity: visibleFinal ? 1 : 0 }}
+              >
+                {line.content}
+              </p>
+            );
+          })}
         </div>
 
         <div
@@ -176,21 +237,19 @@ export default function Home() {
             <Button
               variant="primary"
               onClick={() => router.push("/posts")}
-              className="border border-white"
+              className="border border-white px-8 py-4 text-xl rounded-xxl"
             >
               나의 시 작성하기
             </Button>
           ) : (
             <>
               <Link href="/signup">
-                <Button variant="primary" href="/signup" className="border border-white">
+                <Button variant="primary" className="border border-white px-8 py-4 text-xl rounded-xxl">
                   계정 만들기
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="secondary" href="/login">
-                  계정이 있어요
-                </Button>
+                <Button variant="secondary" className="px-8 py-4 text-xl rounded-xxl">계정이 있어요</Button>
               </Link>
             </>
           )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "@/lib/firebase/firebase.js";
 import {
   addDoc,
@@ -12,9 +12,12 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "@/lib/firebase/auth";
 import { Search, X } from "lucide-react";
+import debounce from "lodash.debounce";
 
 interface SearchBarProps {
   onSearch: (keyword: string) => void;
+  initialKeyword?: string;
+  onEmpty?: () => void; // ✅ 입력이 비었을 때 추가 동작을 위한 prop
 }
 
 interface FirebaseUser {
@@ -23,11 +26,19 @@ interface FirebaseUser {
   displayName?: string;
 }
 
-export default function SearchBar({ onSearch }: SearchBarProps) {
-  const [input, setInput] = useState("");
+export default function SearchBar({
+  onSearch,
+  initialKeyword = "",
+  onEmpty,
+}: SearchBarProps) {
+  const [input, setInput] = useState(initialKeyword);
   const [recentKeywords, setRecentKeywords] = useState<string[]>([]);
   const { user } = useAuth() as { user: FirebaseUser | null };
   const RECENT_KEY = "recent_search_keywords";
+
+  useEffect(() => {
+    setInput(initialKeyword || "");
+  }, [initialKeyword]);
 
   useEffect(() => {
     const loadKeywords = async () => {
@@ -75,8 +86,11 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
 
   const handleSearch = async () => {
     const keyword = input.trim();
-    if (!keyword) return;
-    
+    if (!keyword) {
+      onSearch("");
+      return;
+    }
+
     if (user) {
       await addDoc(collection(db, "user_logs"), {
         userId: user.uid,
@@ -88,7 +102,31 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
 
     await saveKeyword(keyword);
     onSearch(keyword);
-    setInput(""); // 입력창 초기화 (선택 사항)
+  };
+
+  const debouncedSearch = useMemo(() => {
+    const fn = debounce((value: string) => {
+      const trimmed = value.trim();
+      if (trimmed === "") {
+        onEmpty?.(); // ✅ 비었을 때 추가 동작
+        onSearch("");
+      } else {
+        onSearch(trimmed);
+      }
+    }, 300);
+    return fn;
+  }, [onSearch, onEmpty]);
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInput(value);
+    debouncedSearch(value);
   };
 
   return (
@@ -97,7 +135,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)} // ✅ 실시간 검색 제거
+          onChange={handleInputChange}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder="시를 찾아보세요..."
           className="bg-transparent text-white placeholder-white/70 outline-none w-full"
@@ -121,7 +159,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
               <button
                 onClick={() => {
                   setInput(word);
-                  onSearch(word); // ✅ 최근 검색어 눌렀을 때만 검색
+                  onSearch(word);
                 }}
               >
                 {word}

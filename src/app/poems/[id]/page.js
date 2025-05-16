@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/firebase/auth';
 import { checkLikedPoem, logLikePoem, logReadPoem } from '../../../lib/user-activity';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase';
+import Button from '@/components/ui/Button'; // ✅ 커스텀 Button 컴포넌트
 
 export default function PoemDetail() {
   const router = useRouter();
@@ -121,29 +122,37 @@ export default function PoemDetail() {
           </div>
 
           <div className="flex gap-2">
-            <button
+            {/* ❤️ 좋아요 버튼 */}
+            <Button
               onClick={handleLike}
-              className={`px-3 py-1 rounded text-white transition ${liked ? 'bg-pink-600 hover:bg-pink-700' : 'bg-gray-600 hover:bg-gray-700'}`}
+              className="px-3 py-1 rounded-xl border border-white flex items-center gap-1"
+              variant={liked ? "secondary" : "primary"}
             >
               <Heart className="w-5 h-5" fill={liked ? 'white' : 'none'} /> {likeCount}
-            </button>
-            <button
+            </Button>
+
+            {/* 🔊 음성 재생 버튼 */}
+            <Button
               onClick={speakPoem}
-              className="bg-blue-600 px-3 py-1 rounded text-white hover:bg-blue-700 transition"
+              variant="primary"
               disabled={isSpeaking}
+              className="px-3 py-1 rounded-xl border border-white"
             >
               <Volume2 className="w-5 h-5" />
-            </button>
-            <button
+            </Button>
+
+            {/* ⏹ 음성 정지 버튼 */}
+            <Button
               onClick={stopSpeaking}
-              className="bg-red-500 px-3 py-1 rounded text-white hover:bg-red-600 transition"
+              variant="primary"
+              className="px-3 py-1 rounded-xl border border-white"
             >
               <Square className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
         </div>
 
-        <pre className="whitespace-pre-wrap leading-relaxed">{poem.content}</pre>
+        <pre className="whitespace-pre-wrap leading-relaxed font-sans">{poem.content}</pre>
       </div>
     </div>
   );

@@ -1,0 +1,21 @@
+/* page.module.css */
+
+.glowText {
+  transition: text-shadow 0.3s ease;
+}
+
+.glowText:hover {
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.8),
+    0 0 8px rgba(255, 255, 255, 0.8),
+    0 0 12px rgba(255, 255, 255, 0.9),
+    0 0 20px rgba(255, 255, 255, 1);
+}
+
+.scrollLeft {
+  direction: rtl; /* 스크롤바를 왼쪽으로 이동 */
+}
+
+.scrollLeft > * {
+  direction: ltr; /* 내용은 다시 정상 방향으로 */
+}
