@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/firebase/auth"; // ✅ 추가: 로그인 유저 �
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/firebase"; // ✅ 이미 있을 수도 있어
 import Card from "@/components/ui/Card";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 export default function PostDetailPage({ params }) {
   const router = useRouter();
@@ -106,7 +107,7 @@ export default function PostDetailPage({ params }) {
 
   const isAuthor = user && post?.authorId === user.uid; // ✅ 본인 글인지 확인
 
-  if (loading) return <div>로딩 중...</div>;
+  if (loading) return <LoadingScreen />;
   if (!post) return <div>게시글을 찾을 수 없습니다.</div>;
 
   return (
