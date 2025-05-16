@@ -1,8 +1,7 @@
 'use client'
 
 import { cva } from 'class-variance-authority'
-import { cn } from '@/utils/cn' // 클래스 병합 도우미 함수
-
+import { cn } from '@/utils/cn'
 import { ButtonHTMLAttributes } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,17 +9,22 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const buttonStyles = cva(
-  'px-5 py-2 text-base font-medium rounded-full transition duration-200 flex items-center justify-center',
+  'px-6 py-2 text-base font-medium rounded-full transition duration-300 ease-in-out',
   {
     variants: {
       variant: {
-        primary: 'bg-foreground text-background hover:bg-gray-300 rounded-2xl',
-        secondary:
-          'bg-transparent border border-gray-400 text-white hover:border-white rounded-2xl',
+        primary: `
+          bg-black text-white border border-white
+          hover:shadow-glow
+        `,
+        secondary: `
+          bg-transparent text-white border border-white/50
+          hover:bg-white/10 hover:shadow-glow
+        `,
       },
-      defaultVariants: {
-        variant: 'primary',
-      },
+    },
+    defaultVariants: {
+      variant: 'primary',
     },
   }
 )
