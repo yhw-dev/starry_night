@@ -10,9 +10,9 @@ interface Post {
   id: number;
   title: string;
   content: string;
-  author: string;
-  date: string;
-  likes?: number;
+  createdAt: string;
+  likes: number;
+  authorId: string;
 }
 
 export default function SearchResultClient() {
@@ -20,23 +20,37 @@ export default function SearchResultClient() {
   const keyword = searchParams.get("keyword") || "";
   const [results, setResults] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+
+  // 전체 글 불러오기 (초기 진입 시 또는 검색어 제거 시 사용)
+  const fetchAllPosts = async () => {
+    try {
+      const res = await fetch("/api/posts");
+      const data = await res.json();
+      setAllPosts(data);
+      setResults(data);
+    } catch (err) {
+      console.error("전체 글 로딩 실패:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    if (!keyword.trim()) {
+      fetchAllPosts();
+      return;
+    }
+
     setLoading(true);
-
-    const url =
-      keyword.trim() === ""
-        ? "/api/posts" // ✅ keyword 없으면 전체 글 API
-        : `/api/search?keyword=${encodeURIComponent(keyword)}`;
-
-    fetch(url)
+    fetch(`/api/search?keyword=${encodeURIComponent(keyword)}`)
       .then((res) => res.json())
       .then((data) => {
         setResults(data);
         setLoading(false);
       })
       .catch((error) => {
-        console.error("글 불러오기 오류:", error);
+        console.error("검색 오류:", error);
         setLoading(false);
       });
   }, [keyword]);
@@ -44,17 +58,20 @@ export default function SearchResultClient() {
   return (
     <div className="px-6 py-10 text-white flex flex-col items-center min-h-[60vh]">
       <div className="w-full max-w-4xl flex flex-col items-center text-center">
-        {keyword && (
+        {keyword ? (
           <h1 className="text-2xl font-semibold mb-6 flex items-center gap-2 justify-center">
             <Search className="w-6 h-6 text-white" />
             “{keyword}” 검색 결과
           </h1>
+        ) : (
+          <h1 className="text-2xl font-semibold mb-6 text-white">게시글 목록</h1>
         )}
 
         {loading ? (
           <p className="text-gray-300">불러오는 중...</p>
         ) : results.length === 0 ? (
-          <p className="text-gray-400">“{keyword}”에 대한 결과가 없습니다.</p>
+          <p className="text-gray-400">“{keyword}”에 대한 결과가 없습니다.
+          </p>
         ) : (
           <div className="w-full flex justify-center">
             <div className="flex flex-wrap justify-center gap-6 max-w-4xl">
