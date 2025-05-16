@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/lib/firebase/auth";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 import styles from "./page.module.css";
@@ -39,6 +41,11 @@ const finalLines = [
 export default function Home() {
   const [visibleLines, setVisibleLines] = useState(0);
   const [visibleFinal, setVisibleFinal] = useState(false);
+  const canvasRef = useRef(null);
+  const meteors = useRef([]);
+
+  const { user } = useAuth(); // ✅ 로그인 정보
+  const router = useRouter(); // ✅ 페이지 이동
 
   useEffect(() => {
     const timers = [];
@@ -61,9 +68,82 @@ export default function Home() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    const createMeteor = () => {
+      const speed = 1.5;
+      meteors.current.push({
+        x: Math.random() * width * 0.5,
+        y: Math.random() * height * 0.5,
+        vx: speed,
+        vy: speed,
+        opacity: 1,
+      });
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      meteors.current.forEach((m) => {
+        m.x += m.vx;
+        m.y += m.vy;
+        m.opacity -= 0.008;
+
+        const tailLength = 200;
+        const angle = Math.atan2(m.vy, m.vx);
+        const tailX = m.x - Math.cos(angle) * tailLength;
+        const tailY = m.y - Math.sin(angle) * tailLength;
+
+        const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+        grad.addColorStop(0, `rgba(255,255,255,${m.opacity})`);
+        grad.addColorStop(1, "rgba(255,255,255,0)");
+
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(m.x, m.y);
+        ctx.lineTo(tailX, tailY);
+        ctx.stroke();
+      });
+
+      meteors.current = meteors.current.filter((m) => m.opacity > 0);
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    const interval = setInterval(() => {
+      if (Math.random() < 0.9) createMeteor();
+    }, 500 + Math.random() * 1000);
+
+    const handleResize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   return (
     <div className={styles.page}>
-      <main className={`${styles.main} flex flex-col items-center justify-center mt-[-10rem]`}>
+      <canvas
+        ref={canvasRef}
+        className="fixed top-0 left-0 w-full h-full pointer-events-none z-0"
+      />
+      <main className={`${styles.main} flex flex-col items-center justify-center mt-[-10rem] relative z-10`}>
         <div className="text-xl leading-relaxed text-center space-y-1">
           {lines.map((line, index) => (
             <p
@@ -92,16 +172,28 @@ export default function Home() {
           className={`${styles.ctas} mt-8 transition-opacity duration-1000 ease-in`}
           style={{ opacity: visibleFinal ? 1 : 0 }}
         >
-          <Link href="/signup">
-            <Button variant="primary" href="/signup" className="border border-white">
-              계정 만들기
+          {user ? (
+            <Button
+              variant="primary"
+              onClick={() => router.push("/posts")}
+              className="border border-white"
+            >
+              나의 시 작성하기
             </Button>
-          </Link>
-          <Link href="/login">
-            <Button variant="secondary" href="/login">
-              계정이 있어요
-            </Button>
-          </Link>
+          ) : (
+            <>
+              <Link href="/signup">
+                <Button variant="primary" href="/signup" className="border border-white">
+                  계정 만들기
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="secondary" href="/login">
+                  계정이 있어요
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </main>
     </div>
