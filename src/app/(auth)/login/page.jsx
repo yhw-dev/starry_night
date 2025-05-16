@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/firebase/auth';
 import Button from '@/components/ui/Button';
@@ -14,6 +14,9 @@ const Login = () => {
     resetPassword,
   } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const reauthTarget = searchParams.get("reauthTarget"); // 🔹 추가: 탈퇴용 재로그인 여부 확인
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +32,13 @@ const Login = () => {
 
     try {
       const userCredential = await login(email, password);
-      router.push('/');
+
+      // 🔹 로그인 후 탈퇴 재요청인지 확인
+      if (reauthTarget === "delete") {
+        router.push("/delete-account?reauth=true");
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       console.error('로그인 에러:', err.code, err.message);
 
@@ -62,21 +71,30 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white/10 backdrop-blur-md text-white p-8 rounded-xl shadow-xl">
-        <h2 className="text-2xl font-bold text-center mb-6 tracking-wider text-white">로그인</h2>
+        <h2 className="text-2xl font-bold text-center mb-6 tracking-wider text-white">
+          로그인
+        </h2>
+
+        {/* 🔹 안내 메시지 (선택) */}
+        {reauthTarget === "delete" && (
+          <p className="text-center text-sm text-blue-300 mb-4">
+            보안을 위해 다시 로그인해주세요. 로그인 후 바로 탈퇴가 진행됩니다.
+          </p>
+        )}
 
         {error && (
           <>
             <p className="text-red-400 text-sm mb-2 text-center">{error}</p>
-                {showResetLink && (
-                  <div className="text-center">
-                    <button
-                      onClick={handleResetPassword}
-                      className="text-sm text-blue-400 underline hover:text-blue-300 transition"
-                    >
-                      비밀번호를 재설정하시겠습니까?
-                    </button>
-                  </div>
-                )}
+            {showResetLink && (
+              <div className="text-center">
+                <button
+                  onClick={handleResetPassword}
+                  className="text-sm text-blue-400 underline hover:text-blue-300 transition"
+                >
+                  비밀번호를 재설정하시겠습니까?
+                </button>
+              </div>
+            )}
           </>
         )}
 

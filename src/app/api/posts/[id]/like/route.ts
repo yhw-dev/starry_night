@@ -1,12 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-// POST: /api/posts/[id]/like
+// ✅ 좋아요 상태 확인: GET /api/posts/[id]/like?userId=abc
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
+  const userId = req.nextUrl.searchParams.get('userId');
+
+  if (!userId) {
+    return NextResponse.json({ error: 'userId가 필요합니다.' }, { status: 400 });
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT 1 FROM poem_likes WHERE user_id = $1 AND poem_id = $2',
+      [userId, id]
+    );
+
+    const liked = result.rowCount > 0;
+    return NextResponse.json({ liked }, { status: 200 });
+  } catch (err) {
+    console.error('좋아요 상태 확인 실패:', err);
+    return NextResponse.json({ error: '서버 오류' }, { status: 500 });
+  }
+}
+
+// ✅ 좋아요 토글: POST /api/posts/[id]/like
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await params;
+  const { id } = params;
   const { userId } = await req.json();
 
   if (!userId) {

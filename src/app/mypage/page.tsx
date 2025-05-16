@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import axios from "axios"
@@ -71,6 +72,7 @@ export default function MyPostsPage() {
   if (!user) return <div className="text-white mt-10 text-center">로그인이 필요합니다.</div>
 
   const myPosts = posts.filter((post) => post.authorId === user.uid)
+  const likedSet = new Set(likedPoems.map((p) => p.id)) //좋아요 상태 동기화
 
   return (
     <div className="flex flex-col items-center py-10">
@@ -97,7 +99,12 @@ export default function MyPostsPage() {
                   <td className="px-6 py-4 text-gray-400">
                     {formatDate(post.createdAt)}
                   </td>
-                  <td className="px-6 py-4 text-pink-400">❤️ {post.likes}</td>
+                  <td className="px-6 py-4 text-pink-400 flex items-center gap-1">
+                    <span className="text-lg">
+                      {likedSet.has(post.id) ? "💙" : "🤍"}
+                    </span>
+                    {post.likes}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -131,7 +138,12 @@ export default function MyPostsPage() {
                   <td className="px-6 py-4 text-gray-400">
                     {formatDate(post.createdAt)}
                   </td>
-                  <td className="px-6 py-4 text-pink-400">❤️ {post.likes}</td>
+                  <td className="px-6 py-4 text-pink-400 flex items-center gap-1">
+                    <span className="text-lg">
+                      {likedSet.has(post.id) ? "💙" : "🤍"}
+                    </span>
+                    {post.likes}
+                  </td>
                 </tr>
               ))}
             </tbody>

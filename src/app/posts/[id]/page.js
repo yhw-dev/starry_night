@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import Button from "@/components/ui/Button";
-import { useAuth } from "@/lib/firebase/auth"; // ✅ 추가: 로그인 유저 정보
+import { useAuth } from "@/lib/firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase/firebase"; // ✅ 이미 있을 수도 있어
+import { db } from "@/lib/firebase/firebase";
 import Card from "@/components/ui/Card";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 export default function PostDetailPage({ params }) {
   const router = useRouter();
@@ -16,9 +17,27 @@ export default function PostDetailPage({ params }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(0);
   const resolvedParams = use(params);
-  const { user } = useAuth(); // ✅ 로그인 유저 정보
-  const [authorName, setAuthorName] = useState(null); // 🔼 useState는 상단에!
+  const { user } = useAuth();
+  const [authorName, setAuthorName] = useState(null);
 
+  // ✅ 게시글 데이터 불러오기
+  useEffect(() => {
+    axios
+      .get(`/api/posts/${resolvedParams.id}`)
+      .then((res) => {
+        setPost(res.data);
+        setLikes(res.data.likes);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        setLoading(false);
+        alert("게시글을 불러올 수 없습니다.");
+        router.push("/posts");
+      });
+  }, [resolvedParams.id, router]);
+
+  // ✅ 작성자 이름 Firestore에서 조회
   useEffect(() => {
     const fetchAuthorName = async () => {
       if (post?.authorId) {
@@ -38,24 +57,50 @@ export default function PostDetailPage({ params }) {
     };
 
     fetchAuthorName();
-  }, [post?.authorId]); // 🔁 post가 준비된 이후에 실행됨
+  }, [post?.authorId]);
 
+  // ✅ 좋아요 상태 초기 동기화
   useEffect(() => {
-    axios
-      .get(`/api/posts/${resolvedParams.id}`)
-      .then((res) => {
-        setPost(res.data);
-        setLikes(res.data.likes);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        setLoading(false);
-        alert("게시글을 불러올 수 없습니다.");
-        router.push("/posts");
-      });
-  }, [resolvedParams.id, router]);
+    const fetchLikedStatus = async () => {
+      if (!user || !post?.id) return;
 
+      try {
+        const res = await axios.get(`/api/posts/${post.id}/liked?userId=${user.uid}`);
+        setLiked(res.data.liked);
+      } catch (error) {
+        console.error("좋아요 상태 확인 실패:", error);
+      }
+    };
+
+    fetchLikedStatus();
+  }, [user, post?.id]);
+
+  // ✅ 좋아요 토글
+  const handleLike = async () => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    const optimisticLiked = !liked;
+    setLiked(optimisticLiked);
+    setLikes((prev) => prev + (optimisticLiked ? 1 : -1));
+
+    try {
+      const res = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
+        userId: user.uid,
+      });
+      setLiked(res.data.liked);
+      setLikes(res.data.likes);
+    } catch (error) {
+      console.error("좋아요 오류:", error);
+      setLiked((prev) => !prev);
+      setLikes((prev) => prev - (optimisticLiked ? 1 : -1));
+      alert("좋아요 처리에 실패했습니다.");
+    }
+  };
+
+  // ✅ 삭제
   const handleDelete = async () => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
@@ -73,40 +118,9 @@ export default function PostDetailPage({ params }) {
     }
   };
 
-  const handleLike = async () => {
-    if (!user) {
-      alert("로그인이 필요합니다.");
-      console.warn("❌ 좋아요 실패: 로그인된 유저가 없음");
-      return;
-    }
+  const isAuthor = user && post?.authorId === user.uid;
 
-    // ✅ Optimistic UI 처리
-    const optimisticLiked = !liked;
-    setLiked(optimisticLiked);
-    setLikes((prev) => prev + (optimisticLiked ? 1 : -1));
-
-    try {
-      const res = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
-        userId: user.uid,
-      });
-
-      // ✅ 서버 응답과 실제 동기화
-      setLiked(res.data.liked);
-      setLikes(res.data.likes);
-    } catch (error) {
-      console.error("좋아요 오류:", error);
-
-      // ⛔ 실패 시 롤백
-      setLiked((prev) => !prev);
-      setLikes((prev) => prev - (optimisticLiked ? 1 : -1));
-
-      alert("좋아요 처리에 실패했습니다.");
-    }
-  };
-
-  const isAuthor = user && post?.authorId === user.uid; // ✅ 본인 글인지 확인
-
-  if (loading) return <div>로딩 중...</div>;
+  if (loading) return <LoadingScreen />;
   if (!post) return <div>게시글을 찾을 수 없습니다.</div>;
 
   return (
@@ -117,7 +131,6 @@ export default function PostDetailPage({ params }) {
         </h1>
         <p className="text-sm text-gray-300 mb-6">
           {authorName || "..."}
-          <br />
         </p>
         <p className="text-sm text-gray-300 mb-6">
           {new Date(post.createdAt).toLocaleDateString()}
@@ -143,7 +156,6 @@ export default function PostDetailPage({ params }) {
           <Link href="/posts">
             <Button variant="primary">목록</Button>
           </Link>
-
           {isAuthor && (
             <>
               <Link href={`/posts/${resolvedParams.id}/edit`}>
@@ -152,7 +164,7 @@ export default function PostDetailPage({ params }) {
               <Button onClick={handleDelete} variant="secondary">
                 삭제
               </Button>
-            </>
+            </>git
           )}
         </div>
       </div>
