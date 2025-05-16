@@ -106,8 +106,8 @@ export default function PostsPage() {
               </span>
             </Link>
             {typeof post.likes === "number" && (
-              <div className="absolute bottom-2 right-4 flex items-center gap-1 text-pink-300 text-sm">
-                <HeartSolid className="w-5 h-5 fill-red-500" />
+              <div className="absolute bottom-2 right-4 flex items-center gap-1 text-white text-sm">
+                <HeartSolid className="w-5 h-5 fill-blue-300" />
                 {post.likes}
               </div>
             )}
