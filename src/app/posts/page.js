@@ -7,13 +7,16 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import SearchBar from "@/components/user-activity/SearchBar";
 import LoadingScreen from "@/components/ui/LoadingScreen";
-import { useAuth } from "@/lib/firebase/auth"; // ✅ 추가
+import { useAuth } from "@/lib/firebase/auth";
+import { db } from "@/lib/firebase/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function PostsPage() {
   const router = useRouter();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth(); // ✅ 추가
+  const [authorNames, setAuthorNames] = useState({});
+  const { user } = useAuth();
 
   const handleSearch = (keyword) => {
     if (!keyword) return;
@@ -23,9 +26,30 @@ export default function PostsPage() {
   useEffect(() => {
     axios
       .get("/api/posts")
-      .then((res) => {
-        setPosts(res.data);
+      .then(async (res) => {
+        const postsData = res.data;
+        setPosts(postsData);
         setLoading(false);
+
+        // 작성자 이름 가져오기
+        const nameMap = {};
+        for (const post of postsData) {
+          const uid = post.authorId;
+          if (!uid || nameMap[uid]) continue;
+
+          try {
+            const snap = await getDoc(doc(db, "users", uid));
+            if (snap.exists()) {
+              nameMap[uid] = snap.data().displayName || "익명";
+            } else {
+              nameMap[uid] = "탈퇴한 사용자";
+            }
+          } catch (err) {
+            console.error("작성자 이름 로드 실패:", err);
+            nameMap[uid] = "알 수 없음";
+          }
+        }
+        setAuthorNames(nameMap);
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -43,7 +67,6 @@ export default function PostsPage() {
         <SearchBar onSearch={handleSearch} />
       </div>
 
-      {/* ✅ 로그인된 사용자만 시 쓰기 버튼 보이게 하기 */}
       {user && (
         <Link href="/posts/write" className="mb-6">
           <Button variant="primary">시 쓰기</Button>
@@ -55,9 +78,19 @@ export default function PostsPage() {
           <Link key={post.id} href={`/posts/${post.id}`} className="block">
             <Card className="w-full">
               <h2 className="text-black text-xl font-bold">{post.title}</h2>
-              <span className="text-gray-500 text-sm">
-                {new Date(post.createdAt).toLocaleDateString()}
-              </span>
+
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-gray-500 text-sm">
+                  {new Date(post.createdAt).toLocaleDateString()}
+                </span>
+                <span className="text-pink-600 text-sm font-semibold">
+                  ❤️ {post.likes}
+                </span>
+              </div>
+
+              <div className="text-gray-600 text-sm mt-1">
+                ✏️ {authorNames[post.authorId] || "불러오는 중..."}
+              </div>
             </Card>
           </Link>
         ))}

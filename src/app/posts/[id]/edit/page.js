@@ -1,6 +1,5 @@
 import EditForm from "./editForm";
 
-export default async function EditPage(props) {
-  const params = await props.params;
+export default function EditPage({ params }) {
   return <EditForm postId={params.id} />;
 }
