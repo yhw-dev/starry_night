@@ -10,6 +10,7 @@
     "seed": "node ./src/lib/dev/seedPoems.js"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@neondatabase/serverless": "^1.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.16",
@@ -19,6 +20,7 @@
     "clsx": "^2.1.1",
     "cva": "^0.0.0",
     "firebase": "^11.7.1",
+    "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.508.0",
     "next": "15.3.2",
     "pg": "^8.16.0",
@@ -27,6 +29,7 @@
     "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.9",
     "@types/react": "19.1.4",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",

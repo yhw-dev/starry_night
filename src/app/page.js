@@ -29,13 +29,18 @@ const lines = [
   </>,
 ];
 
+// 세로선은 div로, 문장은 fragment로 분리
 const finalLines = [
-  ".",
-  ".",
-  ".",
-  <>
-    당신의 <span className="font-bold">별</span>에는 어떤 이야기가 담겨있나요?
-  </>,
+  { type: "divider" },
+  {
+    type: "text",
+    content: (
+      <>
+        당신의 <span className="font-bold">별</span>에는 어떤 이야기가
+        담겨있나요?
+      </>
+    ),
+  },
 ];
 
 export default function Home() {
@@ -86,7 +91,7 @@ export default function Home() {
         y: Math.random() * height * 0.2,
         vx: speed,
         vy: speed,
-        opacity: 0, // ⭐ 시작 투명
+        opacity: 0,
       });
     };
 
@@ -196,17 +201,32 @@ export default function Home() {
             </p>
           ))}
 
-          {finalLines.map((line, index) => (
-            <p
-              key={`final-${index}`}
-              className={`transition-opacity duration-1000 ease-in ${
-                index === finalLines.length - 1 ? "text-3xl" : ""
-              }`}
-              style={{ opacity: visibleFinal ? 1 : 0 }}
-            >
-              {line}
-            </p>
-          ))}
+          {finalLines.map((line, index) => {
+            if (line.type === "divider") {
+              return (
+                <div
+                  key={`final-${index}`}
+                  className="w-px h-20 bg-white mx-auto my-20 transition-opacity duration-1000 ease-in"
+                  style={{
+                    opacity: visibleFinal ? 1 : 0,
+                    height: "8rem", // 선 길이 늘림 (h-32)
+                    marginTop: "1.5rem", // 위쪽 간격
+                    marginBottom: "1.5rem", // 아래쪽 간격
+                  }}
+                />
+              );
+            }
+
+            return (
+              <p
+                key={`final-${index}`}
+                className="text-3xl transition-opacity duration-1000 ease-in"
+                style={{ opacity: visibleFinal ? 1 : 0 }}
+              >
+                {line.content}
+              </p>
+            );
+          })}
         </div>
 
         <div
@@ -217,25 +237,19 @@ export default function Home() {
             <Button
               variant="primary"
               onClick={() => router.push("/posts")}
-              className="border border-white"
+              className="border border-white px-8 py-4 text-xl rounded-xxl"
             >
               나의 시 작성하기
             </Button>
           ) : (
             <>
               <Link href="/signup">
-                <Button
-                  variant="primary"
-                  href="/signup"
-                  className="border border-white"
-                >
+                <Button variant="primary" className="border border-white px-8 py-4 text-xl rounded-xxl">
                   계정 만들기
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="secondary" href="/login">
-                  계정이 있어요
-                </Button>
+                <Button variant="secondary" className="px-8 py-4 text-xl rounded-xxl">계정이 있어요</Button>
               </Link>
             </>
           )}
