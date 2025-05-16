@@ -42,18 +42,18 @@ export default function PostDetailPage({ params }) {
 
   useEffect(() => {
     axios
-        .get(`/api/posts/${resolvedParams.id}`)
-        .then((res) => {
-          setPost(res.data);
-          setLikes(res.data.likes);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          setLoading(false);
-          alert("게시글을 불러올 수 없습니다.");
-          router.push("/posts");
-        });
+      .get(`/api/posts/${resolvedParams.id}`)
+      .then((res) => {
+        setPost(res.data);
+        setLikes(res.data.likes);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        setLoading(false);
+        alert("게시글을 불러올 수 없습니다.");
+        router.push("/posts");
+      });
   }, [resolvedParams.id, router]);
 
   const handleDelete = async () => {
@@ -73,37 +73,36 @@ export default function PostDetailPage({ params }) {
     }
   };
 
-const handleLike = async () => {
-  if (!user) {
-    alert("로그인이 필요합니다.");
-    console.warn("❌ 좋아요 실패: 로그인된 유저가 없음");
-    return;
-  }
+  const handleLike = async () => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      console.warn("❌ 좋아요 실패: 로그인된 유저가 없음");
+      return;
+    }
 
-  // ✅ Optimistic UI 처리
-  const optimisticLiked = !liked;
-  setLiked(optimisticLiked);
-  setLikes((prev) => prev + (optimisticLiked ? 1 : -1));
+    // ✅ Optimistic UI 처리
+    const optimisticLiked = !liked;
+    setLiked(optimisticLiked);
+    setLikes((prev) => prev + (optimisticLiked ? 1 : -1));
 
-  try {
-    const res = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
-      userId: user.uid,
-    });
+    try {
+      const res = await axios.post(`/api/posts/${resolvedParams.id}/like`, {
+        userId: user.uid,
+      });
 
-    // ✅ 서버 응답과 실제 동기화
-    setLiked(res.data.liked);
-    setLikes(res.data.likes);
-  } catch (error) {
-    console.error("좋아요 오류:", error);
+      // ✅ 서버 응답과 실제 동기화
+      setLiked(res.data.liked);
+      setLikes(res.data.likes);
+    } catch (error) {
+      console.error("좋아요 오류:", error);
 
-    // ⛔ 실패 시 롤백
-    setLiked((prev) => !prev);
-    setLikes((prev) => prev - (optimisticLiked ? 1 : -1));
+      // ⛔ 실패 시 롤백
+      setLiked((prev) => !prev);
+      setLikes((prev) => prev - (optimisticLiked ? 1 : -1));
 
-    alert("좋아요 처리에 실패했습니다.");
-  }
-};
-
+      alert("좋아요 처리에 실패했습니다.");
+    }
+  };
 
   const isAuthor = user && post?.authorId === user.uid; // ✅ 본인 글인지 확인
 
@@ -111,56 +110,52 @@ const handleLike = async () => {
   if (!post) return <div>게시글을 찾을 수 없습니다.</div>;
 
   return (
-      <div className="flex flex-col items-center justify-center min-h-screen py-16 px-4 text-white">
-        <div className="max-w-2xl w-full text-center">
-          <h1 className="text-4xl font-bold mb-4 drop-shadow-lg animate-fade-in">
-            {post.title}
-          </h1>
-          <p className="text-sm text-gray-300 mb-6">
-            {authorName || "..."}
-            <br />
+    <div className="flex flex-col items-center justify-center min-h-screen py-16 px-4 text-white">
+      <div className="max-w-2xl w-full text-center">
+        <h1 className="text-4xl font-bold mb-4 drop-shadow-lg animate-fade-in">
+          {post.title}
+        </h1>
+        <p className="text-sm text-gray-300 mb-6">
+          {authorName || "..."}
+          <br />
+        </p>
+        <p className="text-sm text-gray-300 mb-6">
+          {new Date(post.createdAt).toLocaleDateString()}
+        </p>
+
+        <Card likes={likes} className="mb-8 max-w-lg mx-auto">
+          <p className="text-lg leading-relaxed whitespace-pre-wrap">
+            {post.content}
           </p>
-          <p className="text-sm text-gray-300 mb-6">
-            {new Date(post.createdAt).toLocaleDateString()}
-          </p>
+        </Card>
 
-          <Card likes={likes} className="mb-8 max-w-lg mx-auto">
-            <p className="text-lg leading-relaxed whitespace-pre-wrap">
-              {post.content}
-            </p>
-          </Card>
+        <div className="mt-6 flex justify-center items-center gap-4">
+          <Button
+            onClick={handleLike}
+            variant={liked ? "secondary" : "primary"}
+            className="py-2 px-4 rounded-xxl shadow"
+          >
+            {liked ? "🩵 좋아요" : "🤍 좋아요"} {likes}
+          </Button>
+        </div>
 
-          <div className="mt-6 flex justify-center items-center gap-4">
-            <button
-                onClick={handleLike}
-                className={`${
-                    liked
-                        ? "bg-red-600 hover:bg-red-700"
-                        : "bg-gray-600 hover:bg-gray-700"
-                } text-white font-semibold py-2 px-4 rounded-xl shadow transition`}
-            >
-              {liked ? "❤️ 좋아요" : "🤍 좋아요"} {likes}
-            </button>
-          </div>
+        <div className="flex justify-center gap-4 mt-6">
+          <Link href="/posts">
+            <Button variant="primary">목록</Button>
+          </Link>
 
-          <div className="flex justify-center gap-4 mt-6">
-            <Link href="/posts">
-              <Button variant="primary">목록</Button>
-            </Link>
-
-            {isAuthor && (
-                <>
-                  <Link href={`/posts/${resolvedParams.id}/edit`}>
-                    <Button variant="primary">수정</Button>
-                  </Link>
-                  <Button onClick={handleDelete} variant="secondary">
-                    삭제
-                  </Button>
-                </>
-            )}
-          </div>
+          {isAuthor && (
+            <>
+              <Link href={`/posts/${resolvedParams.id}/edit`}>
+                <Button variant="primary">수정</Button>
+              </Link>
+              <Button onClick={handleDelete} variant="secondary">
+                삭제
+              </Button>
+            </>
+          )}
         </div>
       </div>
+    </div>
   );
 }
-
