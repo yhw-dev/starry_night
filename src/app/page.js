@@ -237,19 +237,19 @@ export default function Home() {
             <Button
               variant="primary"
               onClick={() => router.push("/posts")}
-              className="border border-white"
+              className="border border-white px-8 py-4 text-xl rounded-xxl"
             >
               나의 시 작성하기
             </Button>
           ) : (
             <>
               <Link href="/signup">
-                <Button variant="primary" className="border border-white">
+                <Button variant="primary" className="border border-white px-8 py-4 text-xl rounded-xxl">
                   계정 만들기
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="secondary">계정이 있어요</Button>
+                <Button variant="secondary" className="px-8 py-4 text-xl rounded-xxl">계정이 있어요</Button>
               </Link>
             </>
           )}
