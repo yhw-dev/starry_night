@@ -5,7 +5,17 @@ import Link from "next/link";
 import axios from "axios";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/lib/firebase/auth";
-import { doc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  setDoc,
+  serverTimestamp,
+  query,
+  orderBy,
+  getDocs
+} from "firebase/firestore";
 import { db } from "@/lib/firebase/firebase";
 import Card from "@/components/ui/Card";
 import { formatDistanceToNow } from "date-fns";
@@ -51,7 +61,7 @@ export default function PostDetailPage({ params }) {
           setLikes(res.data.likes);
           setLoading(false);
         })
-        .catch((error) => {
+        .catch(() => {
           setLoading(false);
           router.push("/posts");
         });
@@ -84,7 +94,7 @@ export default function PostDetailPage({ params }) {
       } else {
         alert("삭제에 실패했습니다.");
       }
-    } catch (error) {
+    } catch {
       alert("오류가 발생했습니다.");
     }
   };
@@ -106,7 +116,7 @@ export default function PostDetailPage({ params }) {
 
       setLiked(res.data.liked);
       setLikes(res.data.likes);
-    } catch (error) {
+    } catch {
       setLiked((prev) => !prev);
       setLikes((prev) => prev - (optimisticLiked ? 1 : -1));
       alert("좋아요 처리에 실패했습니다.");
@@ -136,8 +146,33 @@ export default function PostDetailPage({ params }) {
       const snap = await getDocs(query(commentRef, orderBy("createdAt", "asc")));
       const fetched = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setComments(fetched);
-    } catch (error) {
+    } catch {
       alert("댓글 작성 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleReport = async (commentId) => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    const reportRef = doc(db, "posts", resolvedParams.id, "comments", commentId, "reports", user.uid);
+
+    const alreadyReported = await getDoc(reportRef);
+    if (alreadyReported.exists()) {
+      alert("이미 신고한 댓글입니다.");
+      return;
+    }
+
+    try {
+      await setDoc(reportRef, {
+        reason: "부적절한 내용",
+        createdAt: serverTimestamp(),
+      });
+      alert("신고가 접수되었습니다.");
+    } catch {
+      alert("신고 중 오류가 발생했습니다.");
     }
   };
 
@@ -148,7 +183,7 @@ export default function PostDetailPage({ params }) {
 
   return (
       <div className="flex flex-col items-center justify-center min-h-screen py-16 px-4 text-white">
-        <div className="max-w-2xl w-full text-left">
+        <div className="max-w-2xl w-full text-center">
           <h1 className="text-4xl font-bold mb-4 drop-shadow-lg animate-fade-in">
             {post.title}
           </h1>
@@ -190,7 +225,7 @@ export default function PostDetailPage({ params }) {
             )}
           </div>
 
-          <div className="mt-12 max-w-xl mx-auto w-full">
+          <div className="mt-12 max-w-xl mx-auto w-full text-left">
             <h2 className="text-xl font-semibold mb-4">댓글</h2>
 
             <div className="flex gap-2 items-center mb-6">
@@ -226,9 +261,18 @@ export default function PostDetailPage({ params }) {
                         </p>
                         <p className="text-xs text-gray-400 mt-2">
                           {comment.createdAt?.seconds
-                              ? formatDistanceToNow(new Date(comment.createdAt.seconds * 1000), { addSuffix: true, locale: ko })
+                              ? formatDistanceToNow(new Date(comment.createdAt.seconds * 1000), {
+                                addSuffix: true,
+                                locale: ko,
+                              })
                               : "방금 전"}
                         </p>
+                        <button
+                            onClick={() => handleReport(comment.id)}
+                            className="text-xs text-red-400 hover:underline mt-2"
+                        >
+                           신고
+                        </button>
                       </li>
                   ))
               )}
@@ -238,5 +282,6 @@ export default function PostDetailPage({ params }) {
       </div>
   );
 }
+
 
 
