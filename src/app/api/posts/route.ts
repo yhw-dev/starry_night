@@ -1,16 +1,16 @@
+// ✅ /api/posts/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-// 전체 게시글 조회 (likedBy 쿼리 포함)
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const likedBy = searchParams.get('likedBy'); // ?likedBy=uid
+  const likedBy = searchParams.get('likedBy');
+  const keyword = searchParams.get('keyword')?.trim() || "";
 
   try {
     let result;
 
     if (likedBy) {
-      // 사용자가 좋아요한 게시글만 불러오기
       result = await pool.query(
         `SELECT p.id, p.title, p.content, p.created_date, p.likes, p.author
          FROM poems p
@@ -19,8 +19,15 @@ export async function GET(req: NextRequest) {
          ORDER BY p.created_date DESC`,
         [likedBy]
       );
+    } else if (keyword) {
+      result = await pool.query(
+        `SELECT id, title, content, created_date, likes, author
+         FROM poems
+         WHERE title ILIKE $1 OR content ILIKE $1 OR author ILIKE $1
+         ORDER BY created_date DESC`,
+        [`%${keyword}%`]
+      );
     } else {
-      // 전체 게시글
       result = await pool.query(
         `SELECT id, title, content, created_date, likes, author
          FROM poems
@@ -34,7 +41,7 @@ export async function GET(req: NextRequest) {
       content: row.content,
       createdAt: row.created_date,
       likes: row.likes,
-      authorId: row.author,
+      author: row.author,
     }));
 
     return NextResponse.json(posts, { status: 200 });
@@ -47,7 +54,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// 새 게시글 작성 (POST)
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
@@ -73,7 +79,7 @@ export async function POST(req: NextRequest) {
       content: result.rows[0].content,
       createdAt: result.rows[0].created_date,
       likes: result.rows[0].likes,
-      authorId: result.rows[0].author,
+      author: result.rows[0].author,
     };
 
     return NextResponse.json(newPost, { status: 201 });
