@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "@/lib/firebase/firebase.js";
 import {
   addDoc,
@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "@/lib/firebase/auth";
 import { Search, X } from "lucide-react";
+import debounce from "lodash.debounce";
 
 interface SearchBarProps {
   onSearch: (keyword: string) => void;
@@ -75,8 +76,11 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
 
   const handleSearch = async () => {
     const keyword = input.trim();
-    if (!keyword) return;
-    
+    if (!keyword) {
+      onSearch(""); // 검색어가 비어 있을 경우도 초기화 처리
+      return;
+    }
+
     if (user) {
       await addDoc(collection(db, "user_logs"), {
         userId: user.uid,
@@ -88,7 +92,29 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
 
     await saveKeyword(keyword);
     onSearch(keyword);
-    setInput(""); // 입력창 초기화 (선택 사항)
+    setInput(""); // 입력창 비우기 (선택 사항)
+  };
+
+  // 🔄 디바운스된 실시간 검색 함수
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        const trimmed = value.trim();
+        if (trimmed) onSearch(trimmed);
+      }, 300),
+    [onSearch]
+  );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInput(value);
+
+    if (value.trim() === "") {
+      onSearch(""); // ✅ 입력이 모두 지워졌을 때 검색 결과 초기화
+      return;
+    }
+
+    debouncedSearch(value);
   };
 
   return (
@@ -97,7 +123,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)} // ✅ 실시간 검색 제거
+          onChange={handleInputChange}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder="시를 찾아보세요..."
           className="bg-transparent text-white placeholder-white/70 outline-none w-full"
@@ -121,7 +147,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
               <button
                 onClick={() => {
                   setInput(word);
-                  onSearch(word); // ✅ 최근 검색어 눌렀을 때만 검색
+                  onSearch(word);
                 }}
               >
                 {word}
