@@ -271,7 +271,7 @@ export default function PostDetailPage({ params }) {
                             onClick={() => handleReport(comment.id)}
                             className="text-xs text-red-400 hover:underline mt-2"
                         >
-                           신고
+                          신고
                         </button>
                       </li>
                   ))
