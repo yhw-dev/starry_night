@@ -43,10 +43,12 @@ export default function Home() {
   const [visibleFinal, setVisibleFinal] = useState(false);
   const canvasRef = useRef(null);
   const meteors = useRef([]);
+  const intervalRef = useRef(null);
 
-  const { user } = useAuth(); // ✅ 로그인 정보
-  const router = useRouter(); // ✅ 페이지 이동
+  const { user } = useAuth();
+  const router = useRouter();
 
+  // ✨ 문장 한 줄씩 등장
   useEffect(() => {
     const timers = [];
 
@@ -68,6 +70,7 @@ export default function Home() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  // ✨ 별똥별 애니메이션
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -77,13 +80,16 @@ export default function Home() {
     canvas.height = height;
 
     const createMeteor = () => {
-      const speed = 1.5;
+      const speed = 3;
+
+      // ⭐ 화면 왼쪽 바깥쪽 (-20%)부터 오른쪽 끝까지 랜덤 시작
+      const startX = Math.random() * width * 1.2 - width * 0.2;
+
       meteors.current.push({
-        x: Math.random() * width * 0.5,
-        y: Math.random() * height * 0.5,
+        x: startX,
+        y: Math.random() * height * 0.2, // 위쪽 20%에서 떨어짐
         vx: speed,
         vy: speed,
-        opacity: 1,
       });
     };
 
@@ -93,7 +99,6 @@ export default function Home() {
       meteors.current.forEach((m) => {
         m.x += m.vx;
         m.y += m.vy;
-        m.opacity -= 0.008;
 
         const tailLength = 200;
         const angle = Math.atan2(m.vy, m.vx);
@@ -101,7 +106,7 @@ export default function Home() {
         const tailY = m.y - Math.sin(angle) * tailLength;
 
         const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
-        grad.addColorStop(0, `rgba(255,255,255,${m.opacity})`);
+        grad.addColorStop(0, "rgba(255,255,255,1)");
         grad.addColorStop(1, "rgba(255,255,255,0)");
 
         ctx.strokeStyle = grad;
@@ -112,15 +117,19 @@ export default function Home() {
         ctx.stroke();
       });
 
-      meteors.current = meteors.current.filter((m) => m.opacity > 0);
+      // 별이 화면 아래까지 도달했을 때만 제거
+      meteors.current = meteors.current.filter((m) => m.y < height + 100);
+
       requestAnimationFrame(animate);
     };
 
     animate();
 
-    const interval = setInterval(() => {
-      if (Math.random() < 0.9) createMeteor();
-    }, 500 + Math.random() * 1000);
+    if (!intervalRef.current) {
+      intervalRef.current = setInterval(() => {
+        if (Math.random() < 0.9) createMeteor(); // 별 생성 확률 조절
+      }, 700); // 생성 간격도 넉넉하게
+    }
 
     const handleResize = () => {
       width = window.innerWidth;
@@ -132,7 +141,10 @@ export default function Home() {
     window.addEventListener("resize", handleResize);
 
     return () => {
-      clearInterval(interval);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       window.removeEventListener("resize", handleResize);
     };
   }, []);
@@ -143,7 +155,9 @@ export default function Home() {
         ref={canvasRef}
         className="fixed top-0 left-0 w-full h-full pointer-events-none z-0"
       />
-      <main className={`${styles.main} flex flex-col items-center justify-center mt-[-10rem] relative z-10`}>
+      <main
+        className={`${styles.main} flex flex-col items-center justify-center mt-[-10rem] relative z-10`}
+      >
         <div className="text-xl leading-relaxed text-center space-y-1">
           {lines.map((line, index) => (
             <p
@@ -183,7 +197,11 @@ export default function Home() {
           ) : (
             <>
               <Link href="/signup">
-                <Button variant="primary" href="/signup" className="border border-white">
+                <Button
+                  variant="primary"
+                  href="/signup"
+                  className="border border-white"
+                >
                   계정 만들기
                 </Button>
               </Link>
