@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/lib/firebase/auth'
-import { User } from "firebase/auth"
+import { User } from 'firebase/auth'
 import Button from '../ui/Button'
 
 const Header = () => {
@@ -38,16 +38,18 @@ const Header = () => {
           ))}
         </nav>
 
-        {/* 사용자 정보 + 버튼들 */}
+        {/* 사용자 정보 및 버튼 */}
         <div className="flex items-center space-x-4">
-          {/* 사용자 이름 */}
+          {/* 사용자 이름 → 마이페이지로 이동 */}
           {typedUser && (
-            <span className="text-sm text-gray-300">
-              {typedUser.displayName ? `${typedUser.displayName}님` : '사용자님'}
-            </span>
+            <Link href="/mypage">
+              <span className="text-sm text-gray-300 hover:underline cursor-pointer">
+                {typedUser.displayName ? `${typedUser.displayName}님` : '사용자님'}
+              </span>
+            </Link>
           )}
 
-          {/* 로그인 / 로그아웃 버튼 */}
+          {/* 로그인 / 로그아웃 / 회원가입 버튼 */}
           {user ? (
             <Button variant="secondary" onClick={logout}>로그아웃</Button>
           ) : (
