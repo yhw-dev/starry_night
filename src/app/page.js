@@ -44,11 +44,11 @@ export default function Home() {
   const canvasRef = useRef(null);
   const meteors = useRef([]);
   const intervalRef = useRef(null);
+  const animationRef = useRef(null);
 
   const { user } = useAuth();
   const router = useRouter();
 
-  // ✨ 문장 한 줄씩 등장
   useEffect(() => {
     const timers = [];
 
@@ -70,7 +70,6 @@ export default function Home() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  // ✨ 별똥별 애니메이션
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -81,17 +80,17 @@ export default function Home() {
 
     const createMeteor = () => {
       const speed = 3;
-
-      // ⭐ 화면 왼쪽 바깥쪽 (-20%)부터 오른쪽 끝까지 랜덤 시작
       const startX = Math.random() * width * 1.2 - width * 0.2;
-
       meteors.current.push({
         x: startX,
-        y: Math.random() * height * 0.2, // 위쪽 20%에서 떨어짐
+        y: Math.random() * height * 0.2,
         vx: speed,
         vy: speed,
+        opacity: 0, // ⭐ 시작 투명
       });
     };
+
+    const fadeInSpeed = 0.005;
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
@@ -100,13 +99,18 @@ export default function Home() {
         m.x += m.vx;
         m.y += m.vy;
 
+        if (m.opacity < 1) {
+          m.opacity += fadeInSpeed;
+          if (m.opacity > 1) m.opacity = 1;
+        }
+
         const tailLength = 200;
         const angle = Math.atan2(m.vy, m.vx);
         const tailX = m.x - Math.cos(angle) * tailLength;
         const tailY = m.y - Math.sin(angle) * tailLength;
 
         const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
-        grad.addColorStop(0, "rgba(255,255,255,1)");
+        grad.addColorStop(0, `rgba(255,255,255,${m.opacity})`);
         grad.addColorStop(1, "rgba(255,255,255,0)");
 
         ctx.strokeStyle = grad;
@@ -117,19 +121,44 @@ export default function Home() {
         ctx.stroke();
       });
 
-      // 별이 화면 아래까지 도달했을 때만 제거
       meteors.current = meteors.current.filter((m) => m.y < height + 100);
 
-      requestAnimationFrame(animate);
+      animationRef.current = requestAnimationFrame(animate);
     };
 
-    animate();
+    const startMeteor = () => {
+      if (!intervalRef.current) {
+        intervalRef.current = setInterval(() => {
+          if (Math.random() < 0.9) createMeteor();
+        }, 600);
+      }
+      if (!animationRef.current) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
 
-    if (!intervalRef.current) {
-      intervalRef.current = setInterval(() => {
-        if (Math.random() < 0.9) createMeteor(); // 별 생성 확률 조절
-      }, 700); // 생성 간격도 넉넉하게
-    }
+    const stopMeteor = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      meteors.current = [];
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        startMeteor();
+      } else {
+        stopMeteor();
+      }
+    };
+
+    startMeteor();
+    document.addEventListener("visibilitychange", handleVisibility);
 
     const handleResize = () => {
       width = window.innerWidth;
@@ -141,11 +170,9 @@ export default function Home() {
     window.addEventListener("resize", handleResize);
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      stopMeteor();
       window.removeEventListener("resize", handleResize);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
 
