@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/lib/firebase/auth";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 import styles from "./page.module.css";
@@ -42,6 +44,9 @@ export default function Home() {
   const canvasRef = useRef(null);
   const meteors = useRef([]);
 
+  const { user } = useAuth(); // ✅ 로그인 정보
+  const router = useRouter(); // ✅ 페이지 이동
+
   useEffect(() => {
     const timers = [];
 
@@ -72,7 +77,7 @@ export default function Home() {
     canvas.height = height;
 
     const createMeteor = () => {
-      const speed = 5 + Math.random() * 2;
+      const speed = 1.5;
       meteors.current.push({
         x: Math.random() * width * 0.5,
         y: Math.random() * height * 0.5,
@@ -90,8 +95,11 @@ export default function Home() {
         m.y += m.vy;
         m.opacity -= 0.008;
 
-        const tailX = m.x - m.vx * 10;
-        const tailY = m.y - m.vy * 10;
+        const tailLength = 200;
+        const angle = Math.atan2(m.vy, m.vx);
+        const tailX = m.x - Math.cos(angle) * tailLength;
+        const tailY = m.y - Math.sin(angle) * tailLength;
+
         const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
         grad.addColorStop(0, `rgba(255,255,255,${m.opacity})`);
         grad.addColorStop(1, "rgba(255,255,255,0)");
@@ -164,16 +172,28 @@ export default function Home() {
           className={`${styles.ctas} mt-8 transition-opacity duration-1000 ease-in`}
           style={{ opacity: visibleFinal ? 1 : 0 }}
         >
-          <Link href="/signup">
-            <Button variant="primary" href="/signup" className="border border-white">
-              계정 만들기
+          {user ? (
+            <Button
+              variant="primary"
+              onClick={() => router.push("/posts")}
+              className="border border-white"
+            >
+              나의 시 작성하기
             </Button>
-          </Link>
-          <Link href="/login">
-            <Button variant="secondary" href="/login">
-              계정이 있어요
-            </Button>
-          </Link>
+          ) : (
+            <>
+              <Link href="/signup">
+                <Button variant="primary" href="/signup" className="border border-white">
+                  계정 만들기
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="secondary" href="/login">
+                  계정이 있어요
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </main>
     </div>
