@@ -7,15 +7,12 @@ import dynamic from 'next/dynamic';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase';
 import { initializeLikesCount } from '@/lib/user-activity/initLikesCount';
-
+import styles from './page.module.css'; // ✅ glow 효과 클래스 import
 
 const SearchBar = dynamic(
   () => import('../../components/user-activity/SearchBar'),
   { ssr: false }
 );
-
-
-
 
 export default function PoemsPage() {
   const [poems, setPoems] = useState([]);
@@ -27,7 +24,6 @@ export default function PoemsPage() {
     // 🚨 개발 중에만 잠깐 활성화 (주의!)
     initializeLikesCount();
   }, []);
-
 
   useEffect(() => {
     // 전체 시 목록 및 검색용 시는 로컬 JSON에서 불러옴
@@ -69,10 +65,10 @@ export default function PoemsPage() {
       <div className="w-1/4 mt-12">
         <h2 className="text-xl font-semibold mb-2">📜 전체 시 목록</h2>
         <div className="overflow-y-auto max-h-[500px] pr-2 custom-scroll">
-          <ul className="space-y-2">
+          <ul className="space-y-2 ml-3 mt-2">
             {poems.map((poem) => (
               <li key={poem.num}>
-                <Link href={`/poems/${poem.num}`} className="hover:underline">
+                <Link href={`/poems/${poem.num}`} className={styles.glowText}>
                   {poem.title} - {poem.author}
                 </Link>
               </li>
@@ -95,7 +91,7 @@ export default function PoemsPage() {
               <ul className="space-y-2">
                 {filtered.map((poem) => (
                   <li key={poem.num}>
-                    <Link href={`/poems/${poem.num}`} className="hover:underline">
+                    <Link href={`/poems/${poem.num}`} className={styles.glowText}>
                       {poem.title} - {poem.author}
                     </Link>
                   </li>
@@ -112,8 +108,8 @@ export default function PoemsPage() {
         <ul className="space-y-2">
           {recommended.map((poem) => (
             <li key={poem.num}>
-              <Link href={`/poems/${poem.num}`} className="text-blue-300 hover:underline">
-                {poem.title} - {poem.author} ❤️ {poem.likesCount || 0}
+              <Link href={`/poems/${poem.num}`} className={`${styles.glowText}`}>
+                {poem.title} - {poem.author} 💙 {poem.likesCount || 0}
               </Link>
             </li>
           ))}
