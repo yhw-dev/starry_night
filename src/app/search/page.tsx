@@ -1,26 +1,42 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import SearchResultClient from "./SearchResultClient";
 import SearchBar from "@/components/user-activity/SearchBar";
 
 export default function SearchPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawKeyword = searchParams.get("keyword") || "";
+  const [keyword, setKeyword] = useState(rawKeyword);
 
-  const handleSearch = (keyword: string) => {
-    if (!keyword) return;
-    console.log("✅ 검색 URL 이동:", keyword);
-    router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
+  // URL의 쿼리 변경 감지 시 keyword 갱신
+  useEffect(() => {
+    setKeyword(rawKeyword);
+  }, [rawKeyword]);
+
+  const handleSearch = (newKeyword: string) => {
+    const trimmed = newKeyword.trim();
+    if (!trimmed) {
+      router.push("/search"); // 🔁 keyword 제거 → 전체 글 목록 보기
+    } else {
+      router.push(`/search?keyword=${encodeURIComponent(trimmed)}`);
+    }
   };
 
   return (
-    <div className="px-6 py-10 text-white">
-      <div className="w-full max-w-md mb-6 px-4">
-        <SearchBar onSearch={handleSearch} />
+    <div className="flex flex-col items-center justify-start px-6 py-10 min-h-screen">
+      {/* 🔍 검색창 */}
+      <div className="w-full max-w-xl mb-10">
+        <SearchBar
+          onSearch={handleSearch}
+          initialKeyword={keyword}
+        />
       </div>
 
-      <Suspense fallback={<div className="text-white">검색 중...</div>}>
+      {/* 📜 검색 결과 */}
+      <Suspense fallback={<div className="text-white">불러오는 중...</div>}>
         <SearchResultClient />
       </Suspense>
     </div>

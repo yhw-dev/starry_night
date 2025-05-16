@@ -16,6 +16,8 @@ import debounce from "lodash.debounce";
 
 interface SearchBarProps {
   onSearch: (keyword: string) => void;
+  initialKeyword?: string;
+  onEmpty?: () => void; // ✅ 입력이 비었을 때 추가 동작을 위한 prop
 }
 
 interface FirebaseUser {
@@ -24,11 +26,19 @@ interface FirebaseUser {
   displayName?: string;
 }
 
-export default function SearchBar({ onSearch }: SearchBarProps) {
-  const [input, setInput] = useState("");
+export default function SearchBar({
+  onSearch,
+  initialKeyword = "",
+  onEmpty,
+}: SearchBarProps) {
+  const [input, setInput] = useState(initialKeyword);
   const [recentKeywords, setRecentKeywords] = useState<string[]>([]);
   const { user } = useAuth() as { user: FirebaseUser | null };
   const RECENT_KEY = "recent_search_keywords";
+
+  useEffect(() => {
+    setInput(initialKeyword || "");
+  }, [initialKeyword]);
 
   useEffect(() => {
     const loadKeywords = async () => {
@@ -77,7 +87,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   const handleSearch = async () => {
     const keyword = input.trim();
     if (!keyword) {
-      onSearch(""); // 검색어가 비어 있을 경우도 초기화 처리
+      onSearch("");
       return;
     }
 
@@ -92,28 +102,30 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
 
     await saveKeyword(keyword);
     onSearch(keyword);
-    setInput(""); // 입력창 비우기 (선택 사항)
   };
 
-  // 🔄 디바운스된 실시간 검색 함수
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((value: string) => {
-        const trimmed = value.trim();
-        if (trimmed) onSearch(trimmed);
-      }, 300),
-    [onSearch]
-  );
+  const debouncedSearch = useMemo(() => {
+    const fn = debounce((value: string) => {
+      const trimmed = value.trim();
+      if (trimmed === "") {
+        onEmpty?.(); // ✅ 비었을 때 추가 동작
+        onSearch("");
+      } else {
+        onSearch(trimmed);
+      }
+    }, 300);
+    return fn;
+  }, [onSearch, onEmpty]);
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInput(value);
-
-    if (value.trim() === "") {
-      onSearch(""); // ✅ 입력이 모두 지워졌을 때 검색 결과 초기화
-      return;
-    }
-
     debouncedSearch(value);
   };
 
