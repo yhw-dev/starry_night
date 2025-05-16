@@ -18,6 +18,8 @@ export default function PostDetailPage({ params }) {
   const resolvedParams = use(params);
   const { user } = useAuth(); // ✅ 로그인 유저 정보
   const [authorName, setAuthorName] = useState(null); // 🔼 useState는 상단에!
+  const [newComment, setNewComment] = useState(""); // 입력된 댓글 내용
+  const [comments, setComments] = useState([]);     // 댓글 목록
 
   useEffect(() => {
     const fetchAuthorName = async () => {
@@ -158,6 +160,45 @@ const handleLike = async () => {
                   </Button>
                 </>
             )}
+          </div>
+          <div className="mt-12 max-w-xl mx-auto w-full">
+            <h2 className="text-xl font-semibold mb-4">댓글</h2>
+
+            {/* 댓글 입력창 */}
+            <div className="flex gap-2 items-center mb-6">
+              <input
+                  type="text"
+                  className="flex-1 px-4 py-2 rounded-lg text-white bg-white/10 backdrop-blur-sm placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="댓글을 남겨보세요"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+              />
+              <button
+                  onClick={() => alert("나중에 구현됩니다")}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md shadow"
+              >
+                등록
+              </button>
+            </div>
+
+
+            {/* 댓글 목록 */}
+            <ul className="space-y-4">
+              {comments.length === 0 ? (
+                  <li className="text-gray-400">아직 댓글이 없습니다.</li>
+              ) : (
+                  comments.map((comment, idx) => (
+                      <li key={idx} className="bg-white/5 backdrop-blur-md rounded-xl p-4 shadow-md border border-white/10 transition hover:scale-[1.01]">
+                        <p className="text-sm text-blue-200 font-semibold">{comment.displayName || "익명"}</p>
+                        <p className="text-white text-base mt-1 whitespace-pre-line">{comment.content}</p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          {comment.createdAt || "방금 전"}
+                        </p>
+                      </li>
+
+                  ))
+              )}
+            </ul>
           </div>
         </div>
       </div>
