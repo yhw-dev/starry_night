@@ -24,18 +24,7 @@ module.exports = {
       boxShadow: {
         glow: '0 0 8px rgba(255, 255, 255, 0.8), 0 0 16px rgba(255, 255, 255, 0.6)',
       },
-      textShadow: {
-        glow: '0 0 8px rgba(255, 255, 255, 0.8)',
-      },
     },
   },
-  plugins: [
-    function ({ addUtilities }) {
-      addUtilities({
-        '.text-glow': {
-          textShadow: '0 0 8px rgba(255, 255, 255, 0.8)',
-        },
-      })
-    },
-  ],
+  plugins: [],
 }
