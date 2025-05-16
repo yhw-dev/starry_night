@@ -10,6 +10,7 @@
     "seed": "node ./src/lib/dev/seedPoems.js"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@neondatabase/serverless": "^1.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.16",
