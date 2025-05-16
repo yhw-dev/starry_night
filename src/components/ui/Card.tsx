@@ -16,12 +16,10 @@ export default function Card({ children, className }: CardProps) {
         'text-white',
         'shadow-md',
         'transition-colors',
-        'duration-300',
-        'hover:bg-white',
-        'hover:text-black',
-        'hover:animate-glowFade'
+        'duration-300'
         ,className)}>
       {children}
+
     </div>
   )
 }
