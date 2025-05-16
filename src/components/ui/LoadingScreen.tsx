@@ -7,7 +7,7 @@ export default function LoadingScreen() {
       {/* <CometShower /> */}
 
       <div className="text-3xl font-semibold tracking-widest text-white animate-glow drop-shadow-lg">
-        별을 찾고 있어요<span className="text-blue-300">...</span>
+        별을 찾고 있어요...
       </div>
     </div>
   );
