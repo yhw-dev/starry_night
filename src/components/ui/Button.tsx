@@ -9,17 +9,17 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const buttonStyles = cva(
-  'px-6 py-2 text-base font-medium rounded-full transition duration-300 ease-in-out',
+  'px-6 py-2 text-base font-medium rounded-full transition duration-300 ease-in-out border',
   {
     variants: {
       variant: {
         primary: `
-          bg-black text-white border border-white
-          hover:shadow-glow
+          bg-transparent text-white border-white
+          hover:bg-white/10 hover:shadow-glow
         `,
         secondary: `
-          bg-transparent text-white border border-white/50
-          hover:bg-white/10 hover:shadow-glow
+          bg-white text-black border-white
+          hover:shadow-glow hover:brightness-105
         `,
       },
     },
